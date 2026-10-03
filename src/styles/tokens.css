@@ -1,0 +1,146 @@
+/*
+  Yazıhane tasarım token'ları.
+  Bileşenlerde hex renk yazılmaz; yalnızca bu değişkenler kullanılır.
+*/
+:root {
+  /* Hollywood revizyon renkleri (kuşak sırasıyla) */
+  --rev-1: #3d6fb6;
+  --rev-2: #d0648f;
+  --rev-3: #c9a227;
+  --rev-4: #4f8f4a;
+  --rev-5: #b8862b;
+  --rev-6: #a8865a;
+  --rev-7: #c86a5a;
+  --rev-8: #a3273a;
+  --swatch-paper: #efe6d4;
+  --swatch-night: #1d1914;
+  --swatch-dark: #1b1c1f;
+  --swatch-type: #ffffff;
+}
+
+:root,
+[data-theme='paper'] {
+  --desk: #e9e2d3;
+  --page: #faf6ee;
+  --panel: #f2ece0;
+  --hover: #e7dfcf;
+  --ink: #1f1b16;
+  --ink-2: #5c5347;
+  --ink-3: #8f8574;
+  --rule: #ddd3c1;
+  --rule-strong: #c6b9a2;
+  --accent: #a3362b;
+  --accent-ink: #8a2c23;
+  --accent-wash: rgb(163 54 43 / 0.09);
+  --selection: rgb(163 54 43 / 0.18);
+  --card-rule: rgb(52 92 150 / 0.16);
+  --card-head: rgb(163 54 43 / 0.55);
+  --shadow: 0 1px 0 rgb(60 45 20 / 0.06);
+  --dim: 0.28;
+
+  --pig-earth: #9a5b34;
+  --pig-olive: #6b7340;
+  --pig-indigo: #34496e;
+  --pig-mustard: #a77c22;
+  --pig-bordeaux: #7a2e3a;
+  --pig-slate: #56616b;
+
+  --font-text: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-script: 'Courier Prime', 'Courier New', monospace;
+  --text-size: 19px;
+
+  --r: 3px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --t-fast: 120ms;
+  --t-med: 180ms;
+  color-scheme: light;
+}
+
+[data-theme='night'] {
+  --desk: #100e0b;
+  --page: #1a1713;
+  --panel: #15120f;
+  --hover: #262019;
+  --ink: #e9e1d3;
+  --ink-2: #aaa08f;
+  --ink-3: #75695a;
+  --rule: #2c261f;
+  --rule-strong: #40372c;
+  --accent: #d47361;
+  --accent-ink: #e08a79;
+  --accent-wash: rgb(212 115 97 / 0.1);
+  --selection: rgb(212 115 97 / 0.24);
+  --card-rule: rgb(120 150 200 / 0.1);
+  --card-head: rgb(212 115 97 / 0.45);
+  --shadow: none;
+  --dim: 0.24;
+
+  --pig-earth: #c08457;
+  --pig-olive: #a3aa6d;
+  --pig-indigo: #8fa4cc;
+  --pig-mustard: #d2aa52;
+  --pig-bordeaux: #c87382;
+  --pig-slate: #96a1ab;
+  color-scheme: dark;
+}
+
+/* Karanlık: nötr grafit, uzun gece seansları için düşük kontrastlı yüzeyler */
+[data-theme='dark'] {
+  --desk: #111214;
+  --page: #1b1c1f;
+  --panel: #151619;
+  --hover: #24262a;
+  --ink: #e4e4e1;
+  --ink-2: #a3a5a8;
+  --ink-3: #6c6f74;
+  --rule: #26282c;
+  --rule-strong: #393c41;
+  --accent: #e07a62;
+  --accent-ink: #ee927c;
+  --accent-wash: rgb(224 122 98 / 0.1);
+  --selection: rgb(224 122 98 / 0.26);
+  --card-rule: rgb(140 160 200 / 0.09);
+  --card-head: rgb(224 122 98 / 0.45);
+  --shadow: none;
+  --dim: 0.22;
+
+  --pig-earth: #c98f63;
+  --pig-olive: #a9b073;
+  --pig-indigo: #93a8d2;
+  --pig-mustard: #d6b05a;
+  --pig-bordeaux: #cf7c8b;
+  --pig-slate: #9aa5b0;
+  color-scheme: dark;
+}
+
+[data-theme='typewriter'] {
+  --desk: #ececec;
+  --page: #ffffff;
+  --panel: #f6f6f6;
+  --hover: #e4e4e4;
+  --ink: #0d0d0d;
+  --ink-2: #3a3a3a;
+  --ink-3: #6e6e6e;
+  --rule: #cfcfcf;
+  --rule-strong: #9a9a9a;
+  --accent: #0d0d0d;
+  --accent-ink: #0d0d0d;
+  --accent-wash: rgb(0 0 0 / 0.06);
+  --selection: rgb(0 0 0 / 0.14);
+  --card-rule: rgb(0 0 0 / 0.08);
+  --card-head: rgb(0 0 0 / 0.5);
+  --shadow: none;
+  --dim: 0.3;
+
+  --pig-earth: #333;
+  --pig-olive: #333;
+  --pig-indigo: #333;
+  --pig-mustard: #333;
+  --pig-bordeaux: #333;
+  --pig-slate: #333;
+  --font-text: 'Courier Prime', 'Courier New', monospace;
+  --text-size: 17px;
+  color-scheme: light;
+}

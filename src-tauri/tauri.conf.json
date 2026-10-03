@@ -1,0 +1,70 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "writetheFout",
+  "version": "0.5.0",
+  "identifier": "app.writethefout.desktop",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "writetheFout.",
+        "width": 1360,
+        "height": 860,
+        "minWidth": 960,
+        "minHeight": 600,
+        "resizable": true,
+        "center": true,
+        "label": "main",
+        "theme": "Dark",
+        "backgroundColor": "#111214"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "msi",
+      "nsis",
+      "dmg",
+      "appimage"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "shortDescription": "Senaryo yazım stüdyosu",
+    "category": "Productivity",
+    "fileAssociations": [
+      {
+        "ext": [
+          "fountain"
+        ],
+        "name": "Fountain senaryosu",
+        "description": "Senaryo (Fountain)",
+        "role": "Editor",
+        "mimeType": "text/plain"
+      }
+    ],
+    "createUpdaterArtifacts": false
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDI4NkE3NDY3QTFBOUI0QjgKUldTNHRLbWhaM1JxS0N6WDJabWFaeVp3MzZUUTlyQzVJb1AzbWxUU0prR1NEZ2xTOU1BcGRrc2oK",
+      "endpoints": [],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}
