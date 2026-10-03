@@ -4,6 +4,7 @@ import { editorBridge, useStore } from '../store/useStore';
 import { colorVar, formatEighths } from '../script/elements';
 import { activeEditor } from './ScriptEditor';
 import { TextSelection } from '@tiptap/pm/state';
+import { t } from '../i18n';
 
 let dragSid: string | null = null;
 
@@ -35,6 +36,7 @@ export function Navigator() {
   const moveToSection = useStore((s) => s.moveSceneToSection);
   const addNote = useStore((s) => s.addNote);
   const [drop, setDrop] = useState<string | null>(null);
+  const sl = useStore((s) => s.settings.lang);
 
   // bölümlere göre grupla
   const groups: { title: string | null; idx: number | null; items: NonNullable<typeof model>['scenes'] }[] = [];
@@ -51,10 +53,10 @@ export function Navigator() {
   const onScript = active.kind === 'script';
 
   return (
-    <nav className="binder" aria-label="Sahneler">
+    <nav className="binder" aria-label={t('Sahneler')}>
       <div className="binder-tree scroll">
         <div className="binder-section">
-          <span className="label">Sahneler</span>
+          <span className="label">{t('Sahneler')}</span>
           <span className="label num">{model?.scenes.length ?? 0}</span>
         </div>
         {groups.map((g, gi) => (
@@ -62,6 +64,7 @@ export function Navigator() {
             {g.title ? (
               <div
                 className={`nav-section ${drop === `sec-${g.idx}` ? 'drop-inside' : ''}`}
+                lang={sl}
                 onClick={() => {
                   if (g.idx === null) return;
                   openScript();
@@ -116,7 +119,7 @@ export function Navigator() {
                 >
                   <span className="scene-no num">{s.number}</span>
                   <i className="chip" style={{ background: color ? `var(${color})` : 'transparent', borderColor: color ? 'transparent' : undefined }} />
-                  <span className="name">{s.heading || 'Başlıksız sahne'}</span>
+                  <span className="name" lang={sl}>{s.heading || t('Başlıksız sahne')}</span>
                   <span className="count num">{formatEighths(s.eighths)}</span>
                 </div>
               );
@@ -125,8 +128,8 @@ export function Navigator() {
         ))}
 
         <div className="binder-section">
-          <span className="label">Notlar</span>
-          <button className="icon-btn small" title="Yeni not" onClick={addNote}>
+          <span className="label">{t('Notlar')}</span>
+          <button className="icon-btn small" title={t('Yeni not')} onClick={addNote}>
             <Plus size={12} />
           </button>
         </div>
@@ -143,17 +146,17 @@ export function Navigator() {
             <span className="name">{n.title}</span>
           </div>
         ))}
-        {notes.length === 0 ? <div className="row muted">Henüz not yok</div> : null}
+        {notes.length === 0 ? <div className="row muted">{t('Henüz not yok')}</div> : null}
       </div>
       <div className="binder-foot">
-        <button onClick={() => appendElement('sceneHeading')} title="Sona yeni sahne">
-          <Plus size={13} /> Sahne
+        <button onClick={() => appendElement('sceneHeading')} title={t('Sona yeni sahne')}>
+          <Plus size={13} /> {t('Sahne')}
         </button>
-        <button onClick={() => appendElement('section')} title="Sona yeni bölüm (basılmaz)">
-          <Plus size={13} /> Bölüm
+        <button onClick={() => appendElement('section')} title={t('Sona yeni bölüm (basılmaz)')}>
+          <Plus size={13} /> {t('Bölüm')}
         </button>
-        <button onClick={addNote} title="Yeni not">
-          <Plus size={13} /> Not
+        <button onClick={addNote} title={t('Yeni not')}>
+          <Plus size={13} /> {t('Not')}
         </button>
       </div>
     </nav>

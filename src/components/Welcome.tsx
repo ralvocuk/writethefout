@@ -3,6 +3,8 @@ import { ThemeSwitch, Wordmark } from './Chrome';
 import { UpdateBadge } from './Update';
 import { RecentList, startImport } from './Dialogs';
 import { baseName } from '../script/document';
+import { LangSwitch } from './LangSwitch';
+import { locale, t } from '../i18n';
 
 /** Açılış ekranı: yeni / aç / örnek / içe aktar, son açılanlar ve kurtarılabilir çalışmalar */
 export function Welcome() {
@@ -13,10 +15,10 @@ export function Welcome() {
   const discard = useStore((s) => s.discardRecovery);
 
   const choices = [
-    { title: 'Yeni senaryo', body: 'Boş sayfa. Tab ve Enter ile kendiliğinden biçimlenir.', keys: 'Ctrl+N', run: () => newDocument(false) },
-    { title: 'Aç…', body: 'Bilgisayarındaki bir .fountain senaryosunu aç.', keys: 'Ctrl+O', run: () => openDialog() },
-    { title: 'İçe aktar…', body: 'Final Draft, Highland, Fade In ya da Celtx dosyasından devam et.', keys: '', run: () => startImport() },
-    { title: 'Örnek senaryo', body: '“Fener Bekçisi” — iki perde, notlar, çift diyalog, etiketler.', keys: '', run: () => newDocument(true) },
+    { title: t('Yeni senaryo'), body: t('Boş sayfa. Tab ve Enter ile kendiliğinden biçimlenir.'), keys: 'Ctrl+N', run: () => newDocument(false) },
+    { title: t('Aç…'), body: t('Bilgisayarındaki bir .fountain senaryosunu aç.'), keys: 'Ctrl+O', run: () => openDialog() },
+    { title: t('İçe aktar…'), body: t('Final Draft, Highland, Fade In ya da Celtx dosyasından devam et.'), keys: '', run: () => startImport() },
+    { title: t('Örnek senaryo'), body: t('“Fener Bekçisi” — iki perde, notlar, çift diyalog, etiketler (Türkçe).'), keys: '', run: () => newDocument(true) },
   ];
 
   return (
@@ -25,33 +27,36 @@ export function Welcome() {
         <UpdateBadge />
       </div>
       <div className="welcome-theme">
-        <span className="muted">Tema</span>
-        <ThemeSwitch />
+        <LangSwitch />
+        <span>
+          <span className="muted">{t('Tema')}</span>
+          <ThemeSwitch />
+        </span>
       </div>
       <div className="welcome-inner">
         <h1>
           <Wordmark big />
         </h1>
-        <p className="lede">Senaryo yazmak için bir masa. Gerisini sayfaya dök.</p>
+        <p className="lede">{t('Senaryo yazmak için bir masa. Gerisini sayfaya dök.')}</p>
 
         {recovery.length ? (
           <section className="recovery">
-            <h3 className="label">Kurtarılabilir çalışma</h3>
+            <h3 className="label">{t('Kurtarılabilir çalışma')}</h3>
             {recovery.map((r) => (
               <div className="recovery-row" key={r.slot}>
                 <span>
-                  <b>{r.path ? `${baseName(r.path)}.fountain` : 'Adsız senaryo'}</b>
+                  <b>{r.path ? `${baseName(r.path)}.fountain` : t('Adsız senaryo')}</b>
                   <span className="muted">
                     {' '}
-                    · kaydedilmemiş değişiklikler, {new Date(r.at).toLocaleString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
+                    · {t('kaydedilmemiş değişiklikler, {when}', { when: new Date(r.at).toLocaleString(locale(), { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) })}
                   </span>
                 </span>
                 <span>
                   <button className="btn primary" onClick={() => restore(r.slot)}>
-                    Geri yükle
+                    {t('Geri yükle')}
                   </button>{' '}
                   <button className="btn" onClick={() => discard(r.slot)}>
-                    Sil
+                    {t('Sil')}
                   </button>
                 </span>
               </div>
@@ -77,13 +82,13 @@ export function Welcome() {
         </div>
 
         <section className="welcome-recent">
-          <h3 className="label">Son açılanlar</h3>
+          <h3 className="label">{t('Son açılanlar')}</h3>
           <RecentList compact />
         </section>
 
         <div className="foot">
-          <span>Senaryolar bilgisayarında standart .fountain dosyası olarak durur; internet gerekmez.</span>
-          <span>Sürüm {__APP_VERSION__}</span>
+          <span>{t('Senaryolar bilgisayarında standart .fountain dosyası olarak durur; internet gerekmez.')}</span>
+          <span>{t('Sürüm {v}', { v: __APP_VERSION__ })}</span>
         </div>
       </div>
     </main>

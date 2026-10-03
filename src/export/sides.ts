@@ -5,6 +5,7 @@
 import { blockText, type ScriptBlock } from '../script/blocks';
 import { baseName } from '../script/elements';
 import type { SceneInfo } from '../script/model';
+import { scriptLabels, type Lang } from './layout';
 
 const SPEECH = new Set(['dialogue', 'parenthetical', 'lyrics']);
 
@@ -75,7 +76,7 @@ export function cueText(text: string, max = 60): string {
 }
 
 /** Replik dökümü: sahne başlıkları, ipuçları ve replikler */
-export function lineListBlocks(speeches: Speech[], lang: 'tr' | 'en'): ScriptBlock[] {
+export function lineListBlocks(speeches: Speech[], lang: Lang): ScriptBlock[] {
   const out: ScriptBlock[] = [];
   let lastSid: string | null | undefined;
   for (const sp of speeches) {
@@ -84,7 +85,7 @@ export function lineListBlocks(speeches: Speech[], lang: 'tr' | 'en'): ScriptBlo
       lastSid = sp.sid;
     } else out.push({ el: 'centered', runs: [{ text: '· · ·' }] });
     if (sp.cue) {
-      out.push({ el: 'character', runs: [{ text: `${sp.cue.name} (${lang === 'tr' ? 'İPUCU' : 'CUE'})` }] });
+      out.push({ el: 'character', runs: [{ text: `${sp.cue.name} (${scriptLabels(lang).cue})` }] });
       out.push({ el: 'dialogue', runs: [{ text: cueText(sp.cue.text), i: true }] });
     }
     // çift diyalog dökümde tek sütun basılır

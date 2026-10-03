@@ -5,7 +5,8 @@ import { numberScenes } from '../export/layout';
 import { lineListBlocks, scenesWith, sidesBlocks, speechesOf } from '../export/sides';
 import { loadFonts, openPath, revealPath, safeName, saveFile } from '../export/platform';
 import { baseName } from '../script/document';
-import { formatEighths, formatNumber, upperTr } from '../script/elements';
+import { formatEighths, upperTr } from '../script/elements';
+import { t } from '../i18n';
 
 const close = () => useStore.getState().openDialogBox(null);
 type Mode = 'sides' | 'lines';
@@ -49,7 +50,7 @@ export function SidesDialog() {
     try {
       const out =
         mode === 'sides' ? sidesBlocks(blocks, model.scenes, picked, { newPagePerScene: newPage }) : lineListBlocks(speeches, settings.lang);
-      const label = mode === 'sides' ? (settings.lang === 'tr' ? 'oyuncu sayfaları' : 'sides') : settings.lang === 'tr' ? 'replik dökümü' : 'lines';
+      const label = mode === 'sides' ? t('oyuncu sayfaları') : t('replik dökümü');
       const { renderPdf } = await import('../export/pdf');
       const r = await renderPdf(
         out,
@@ -64,7 +65,7 @@ export function SidesDialog() {
         null,
         await loadFonts(),
       );
-      const base = safeName(title.title || (doc.path ? baseName(doc.path) : 'senaryo'));
+      const base = safeName(title.title || (doc.path ? baseName(doc.path) : t('senaryo')));
       const res = await saveFile(`${base} - ${name} - ${label}.pdf`, r.bytes, { name: 'PDF', extensions: ['pdf'] });
       if (res.path) setDone({ path: res.path, pages: r.pages });
     } catch (e) {
@@ -78,8 +79,8 @@ export function SidesDialog() {
 
   return (
     <Modal
-      title="Oyuncu sayfaları"
-      aside={info ? `${info.lines} replik · ${scenes.length} sahne` : ''}
+      title={t('Oyuncu sayfaları')}
+      aside={info ? `${t('{n} replik', { n: info.lines })} · ${t('{n} sahne', { n: scenes.length })}` : ''}
       onClose={close}
       wide
       foot={
@@ -87,72 +88,72 @@ export function SidesDialog() {
           {error ? <span className="error">{error}</span> : null}
           {done ? (
             <span className="done">
-              Kaydedildi · {done.pages} sayfa.{' '}
+              {t('Kaydedildi · {n} sayfa.', { n: done.pages })}{' '}
               <button className="text-btn" onClick={() => openPath(done.path)}>
-                Aç
+                {t('Aç')}
               </button>{' '}
               <button className="text-btn" onClick={() => revealPath(done.path)}>
-                Klasörde göster
+                {t('Klasörde göster')}
               </button>
             </span>
           ) : null}
           <span className="grow" />
           <button className="btn" onClick={close}>
-            Kapat
+            {t('Kapat')}
           </button>
           <button className="btn primary" disabled={disabled} onClick={run}>
-            {busy ? 'Hazırlanıyor…' : 'PDF olarak kaydet'}
+            {busy ? t('Hazırlanıyor…') : t('{format} olarak kaydet', { format: 'PDF' })}
           </button>
         </>
       }
     >
       {chars.length === 0 ? (
         <div className="dialog-body">
-          <p className="hint">Senaryoda henüz konuşan bir karakter yok.</p>
+          <p className="hint">{t('Senaryoda henüz konuşan bir karakter yok.')}</p>
         </div>
       ) : (
         <>
-          <div className="formats two" role="radiogroup" aria-label="Tür">
+          <div className="formats two" role="radiogroup" aria-label={t('Tür')}>
             <button role="radio" aria-checked={mode === 'sides'} className="format" onClick={() => setMode('sides')}>
-              <span className="format-name">Sahneler</span>
+              <span className="format-name">{t('Sahneler')}</span>
               <span className="format-ext">sides</span>
-              <span className="format-desc">Karakterin oynadığı sahneler, senaryodaki sayfa düzeni ve sahne numaralarıyla. Seçme ve çekim günü için.</span>
+              <span className="format-desc">{t('Karakterin oynadığı sahneler, senaryodaki sayfa düzeni ve sahne numaralarıyla. Seçme ve çekim günü için.')}</span>
             </button>
             <button role="radio" aria-checked={mode === 'lines'} className="format" onClick={() => setMode('lines')}>
-              <span className="format-name">Replik dökümü</span>
-              <span className="format-ext">ipuçlarıyla</span>
-              <span className="format-desc">Yalnızca karakterin replikleri; her birinin önünde karşısındakinin son cümlesi. Ezber ve okuma provası için.</span>
+              <span className="format-name">{t('Replik dökümü')}</span>
+              <span className="format-ext">{t('ipuçlarıyla')}</span>
+              <span className="format-desc">{t('Yalnızca karakterin replikleri; her birinin önünde karşısındakinin son cümlesi. Ezber ve okuma provası için.')}</span>
             </button>
           </div>
           <div className="dialog-body">
             <label className="opt-row">
-              <span className="muted">Karakter</span>
+              <span className="muted">{t('Karakter')}</span>
               <select className="select" value={name} onChange={(e) => setName(e.target.value)}>
                 {chars.map((c) => (
                   <option key={c.name} value={c.name}>
-                    {c.name} — {c.lines} replik
+                    {c.name} — {t('{n} replik', { n: c.lines })}
                   </option>
                 ))}
               </select>
             </label>
             <label className="opt-row check">
               <input type="checkbox" checked={highlight} onChange={(e) => setHighlight(e.target.checked)} />
-              <span>Replikleri fosforlu kalemle vurgula</span>
+              <span>{t('Replikleri fosforlu kalemle vurgula')}</span>
             </label>
             {mode === 'sides' ? (
               <>
                 <label className="opt-row check">
                   <input type="checkbox" checked={newPage} onChange={(e) => setNewPage(e.target.checked)} />
-                  <span>Her sahne yeni sayfada başlasın</span>
+                  <span>{t('Her sahne yeni sayfada başlasın')}</span>
                 </label>
                 <div className="sides-head">
-                  <span className="label">Sahneler</span>
+                  <span className="label">{t('Sahneler')}</span>
                   <span className="muted num">
-                    {picked.length}/{scenes.length} seçili · {formatEighths(eighths)} sayfa
+                    {t('{a}/{b} seçili', { a: picked.length, b: scenes.length })} · {t('{len} sayfa', { len: formatEighths(eighths) })}
                   </span>
                   <span className="grow" />
                   <button className="text-btn" onClick={() => setPicked(picked.length === scenes.length ? [] : scenes.map((s) => s.sid))}>
-                    {picked.length === scenes.length ? 'Hiçbiri' : 'Tümü'}
+                    {picked.length === scenes.length ? t('Hiçbiri') : t('Tümü')}
                   </button>
                 </div>
                 <div className="sides-list">
@@ -172,7 +173,7 @@ export function SidesDialog() {
               </>
             ) : (
               <p className="hint">
-                {formatNumber(speeches.length)} replik, {new Set(speeches.map((s) => s.sid)).size} sahnede. İpucu satırları italik basılır.
+                {t('{n} replik, {m} sahnede. İpucu satırları italik basılır.', { n: speeches.length, m: new Set(speeches.map((s) => s.sid)).size })}
               </p>
             )}
           </div>

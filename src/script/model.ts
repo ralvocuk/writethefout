@@ -1,6 +1,6 @@
 /** Senaryo belgesinden türetilen yapı: sahneler, bölümler, karakterler, istatistikler. */
 import { blockText, blocksFromJson, type ScriptBlock } from './blocks';
-import { baseName, countWords, upperTr, type TagCat } from './elements';
+import { HEADING_PREFIX, baseName, countWords, upperTr, type TagCat } from './elements';
 import { numberScenes, paginate, sceneSpans, type Paper } from '../export/layout';
 
 export interface SceneInfo {
@@ -42,7 +42,7 @@ export interface ScriptModel {
   actionWords: number;
 }
 
-const HEAD = /^(İÇ\/DIŞ|DIŞ\/İÇ|İÇ|DIŞ|INT\.?\/EXT|EXT\.?\/INT|INT|EXT|I\/E|EST)\.?\s*(.*)$/u;
+const HEAD = new RegExp(`^(${HEADING_PREFIX})\\.?\\s*(.*)$`, 'u');
 
 export function parseHeading(h: string): { intExt: string; location: string; time: string } {
   const u = upperTr(h.trim());
@@ -51,7 +51,8 @@ export function parseHeading(h: string): { intExt: string; location: string; tim
   const dash = rest.lastIndexOf(' - ');
   const ie = m ? m[1].replace(/\.$/, '') : '';
   return {
-    intExt: ie === 'INT' ? 'İÇ' : ie === 'EXT' ? 'DIŞ' : ie.startsWith('INT') || ie === 'I/E' || ie.startsWith('EXT/') ? 'İÇ/DIŞ' : ie,
+    // istatistik ve pano için ortak: İÇ / DIŞ / İÇ/DIŞ
+    intExt: ie === 'INT' || ie === 'INNEN' ? 'İÇ' : ie === 'EXT' || ie === 'AUSSEN' || ie === 'AUẞEN' ? 'DIŞ' : ie.includes('/') || ie === 'I/E' ? 'İÇ/DIŞ' : ie,
     location: (dash >= 0 ? rest.slice(0, dash) : rest).trim(),
     time: dash >= 0 ? rest.slice(dash + 3).trim() : '',
   };

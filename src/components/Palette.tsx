@@ -1,9 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { commands, type Command } from '../commands';
+import { locale, t } from '../i18n';
 
+/** Arama için aksan ve büyük/küçük harf duyarsız biçim (ı → i, ß → ss dahil) */
 const fold = (s: string) =>
-  s.toLocaleLowerCase('tr-TR').replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c');
+  s
+    .toLocaleLowerCase(locale())
+    .replace(/ı/g, 'i')
+    .replace(/ß/g, 'ss')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
 
 interface Item {
   id: string;
@@ -27,11 +34,11 @@ export function Palette() {
     const s = useStore.getState();
     const goTo: Item[] = (model?.scenes ?? []).map((sc) => ({
       id: `go-${sc.sid}`,
-      kind: `Sahne ${sc.number}`,
-      label: sc.heading || 'Başlıksız',
+      kind: t('Sahne {n}', { n: sc.number }),
+      label: sc.heading || t('Başlıksız sahne'),
       run: () => s.openScript(sc.sid),
     }));
-    const noteItems: Item[] = notes.map((n) => ({ id: `note-${n.id}`, kind: 'Not', label: n.title, run: () => s.openNote(n.id) }));
+    const noteItems: Item[] = notes.map((n) => ({ id: `note-${n.id}`, kind: t('Not'), label: n.title, run: () => s.openNote(n.id) }));
     const cmds: Item[] = commands()
       .filter((c: Command) => ready || !c.needsDoc)
       .filter((c) => c.id !== 'palette')
@@ -58,11 +65,11 @@ export function Palette() {
   };
   return (
     <div className="palette-backdrop" onMouseDown={close}>
-      <div className="palette" onMouseDown={(e) => e.stopPropagation()} role="dialog" aria-label="Komut paleti">
+      <div className="palette" onMouseDown={(e) => e.stopPropagation()} role="dialog" aria-label={t('Komut paleti')}>
         <input
           autoFocus
           value={q}
-          placeholder="Sahneye git ya da bir komut yaz…"
+          placeholder={t('Sahneye git ya da bir komut yaz…')}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Escape') close();
@@ -85,7 +92,7 @@ export function Palette() {
               {c.hint ? <span className="kbd">{c.hint}</span> : null}
             </li>
           ))}
-          {filtered.length === 0 ? <li className="muted">Eşleşen yok.</li> : null}
+          {filtered.length === 0 ? <li className="muted">{t('Eşleşen yok.')}</li> : null}
         </ul>
       </div>
     </div>

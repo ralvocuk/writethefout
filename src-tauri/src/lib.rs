@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::UNIX_EPOCH;
 use tauri::menu::{Menu, MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder};
@@ -153,94 +154,127 @@ fn backup_path(app: AppHandle) -> Result<String, String> {
 /* ---------- Menü çubuğu ---------- */
 
 /// Windows menülerinde sekmeden sonrası sağa yaslı kısayol olarak görünür; tuşları arayüz işler.
-fn item<R: Runtime>(app: &AppHandle<R>, id: &str, label: &str, keys: &str) -> tauri::Result<tauri::menu::MenuItem<R>> {
-  let text = if keys.is_empty() { label.to_string() } else { format!("{label}\t{keys}") };
+fn item<R: Runtime>(app: &AppHandle<R>, l: &Labels, id: &str, label: &str, keys: &str) -> tauri::Result<tauri::menu::MenuItem<R>> {
+  let label = tx(l, id, label);
+  let text = if keys.is_empty() { label } else { format!("{label}\t{keys}") };
   MenuItemBuilder::with_id(id, text).build(app)
 }
 
-fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
-  let file = SubmenuBuilder::new(app, "Dosya")
-    .item(&item(app, "new", "Yeni senaryo", "Ctrl+N")?)
-    .item(&item(app, "new-window", "Yeni pencere", "Ctrl+Shift+N")?)
-    .item(&item(app, "open", "Aç…", "Ctrl+O")?)
-    .item(&item(app, "recent", "Son açılanlar…", "")?)
+/// Menü etiketleri arayüz dilinden gelir (kimlik → metin); yoksa Türkçe kaynak kullanılır.
+type Labels = HashMap<String, String>;
+fn tx(l: &Labels, id: &str, default: &str) -> String {
+  l.get(id).cloned().unwrap_or_else(|| default.to_string())
+}
+
+/// Arayüz dili değişince menü çubuğunu yeni etiketlerle yeniden kurar.
+#[tauri::command]
+fn set_menu_labels(app: AppHandle, labels: Labels) -> Result<(), String> {
+  let menu = build_menu(&app, &labels).map_err(|e| e.to_string())?;
+  app.set_menu(menu).map_err(|e| e.to_string())?;
+  Ok(())
+}
+
+fn build_menu<R: Runtime>(app: &AppHandle<R>, l: &Labels) -> tauri::Result<Menu<R>> {
+  let file = SubmenuBuilder::with_id(app, "m-file", tx(l, "m-file", "Dosya"))
+    .item(&item(app, l, "new", "Yeni senaryo", "Ctrl+N")?)
+    .item(&item(app, l, "new-window", "Yeni pencere", "Ctrl+Shift+N")?)
+    .item(&item(app, l, "open", "Aç…", "Ctrl+O")?)
+    .item(&item(app, l, "recent", "Son açılanlar…", "")?)
     .separator()
-    .item(&item(app, "save", "Kaydet", "Ctrl+S")?)
-    .item(&item(app, "save-as", "Farklı kaydet…", "Ctrl+Shift+S")?)
+    .item(&item(app, l, "save", "Kaydet", "Ctrl+S")?)
+    .item(&item(app, l, "save-as", "Farklı kaydet…", "Ctrl+Shift+S")?)
     .separator()
-    .item(&item(app, "import", "İçe aktar (Final Draft, Highland, Fade In, Celtx)…", "")?)
-    .item(&item(app, "export", "Dışa aktar (PDF, Fountain, Final Draft)…", "Ctrl+E")?)
-    .item(&item(app, "sides", "Oyuncu sayfaları ve replik dökümü…", "")?)
-    .item(&item(app, "print", "Baskı önizleme ve yazdır…", "Ctrl+P")?)
+    .item(&item(app, l, "import", "İçe aktar (Final Draft, Highland, Fade In, Celtx)…", "")?)
+    .item(&item(app, l, "export", "Dışa aktar (PDF, Fountain, Final Draft)…", "Ctrl+E")?)
+    .item(&item(app, l, "sides", "Oyuncu sayfaları ve replik dökümü…", "")?)
+    .item(&item(app, l, "print", "Baskı önizleme ve yazdır…", "Ctrl+P")?)
     .separator()
-    .item(&item(app, "snapshot", "Anlık görüntü al", "Ctrl+5")?)
-    .item(&item(app, "backups", "Yedek kasası…", "")?)
+    .item(&item(app, l, "snapshot", "Anlık görüntü al", "Ctrl+5")?)
+    .item(&item(app, l, "backups", "Yedekler…", "")?)
     .separator()
-    .item(&item(app, "close", "Pencereyi kapat", "Ctrl+W")?)
+    .item(&item(app, l, "close", "Pencereyi kapat", "Ctrl+W")?)
     .build()?;
-  let edit = SubmenuBuilder::new(app, "Düzen")
-    .item(&item(app, "undo", "Geri al", "Ctrl+Z")?)
-    .item(&item(app, "redo", "Yinele", "Ctrl+Y")?)
+  let edit = SubmenuBuilder::with_id(app, "m-edit", tx(l, "m-edit", "Düzen"))
+    .item(&item(app, l, "undo", "Geri al", "Ctrl+Z")?)
+    .item(&item(app, l, "redo", "Yinele", "Ctrl+Y")?)
     .separator()
-    .item(&PredefinedMenuItem::cut(app, Some("Kes"))?)
-    .item(&PredefinedMenuItem::copy(app, Some("Kopyala"))?)
-    .item(&PredefinedMenuItem::paste(app, Some("Yapıştır"))?)
-    .item(&PredefinedMenuItem::select_all(app, Some("Tümünü seç"))?)
+    .item(&PredefinedMenuItem::cut(app, Some(&tx(l, "cut", "Kes")))?)
+    .item(&PredefinedMenuItem::copy(app, Some(&tx(l, "copy", "Kopyala")))?)
+    .item(&PredefinedMenuItem::paste(app, Some(&tx(l, "paste", "Yapıştır")))?)
+    .item(&PredefinedMenuItem::select_all(app, Some(&tx(l, "select-all", "Tümünü seç")))?)
     .separator()
-    .item(&item(app, "find", "Bul ve değiştir", "Ctrl+F")?)
-    .item(&item(app, "palette", "Komut paleti", "Ctrl+K")?)
+    .item(&item(app, l, "find", "Bul ve değiştir", "Ctrl+F")?)
+    .item(&item(app, l, "palette", "Komut paleti", "Ctrl+K")?)
     .separator()
-    .item(&item(app, "spell-toggle", "Yazım denetimi aç / kapat", "F7")?)
-    .item(&item(app, "spell-next", "Sonraki yazım hatası", "F8")?)
-    .item(&item(app, "dictionary", "Kişisel sözlük…", "")?)
+    .item(&item(app, l, "spell-toggle", "Yazım denetimi aç / kapat", "F7")?)
+    .item(&item(app, l, "spell-next", "Sonraki yazım hatası", "F8")?)
+    .item(&item(app, l, "tdk-toggle", "TDK yazım önerileri aç / kapat", "")?)
+    .item(&item(app, l, "dictionary", "Kişisel sözlük…", "")?)
     .build()?;
-  let view = SubmenuBuilder::new(app, "Görünüm")
-    .item(&item(app, "tab-write", "Yaz", "")?)
-    .item(&item(app, "tab-board", "Mantar Pano", "")?)
-    .item(&item(app, "tab-outline", "Anahat", "")?)
-    .item(&item(app, "tab-characters", "Karakterler", "")?)
-    .item(&item(app, "tab-timeline", "Zaman Çizelgesi", "")?)
-    .item(&item(app, "tab-stats", "İstatistik", "")?)
-    .separator()
-    .item(&item(app, "focus", "Odak modu", "F11")?)
-    .item(&item(app, "inspector", "Denetçi", "Ctrl+Alt+I")?)
-    .separator()
-    .item(&item(app, "zoom-in", "Yakınlaştır", "Ctrl++")?)
-    .item(&item(app, "zoom-out", "Uzaklaştır", "Ctrl+-")?)
-    .item(&item(app, "zoom-reset", "Gerçek boyut", "Ctrl+0")?)
-    .separator()
-    .item(&item(app, "theme-dark", "Karanlık tema aç / kapat", "Ctrl+Shift+L")?)
-    .item(&item(app, "theme-paper", "Tema: Kâğıt", "")?)
-    .item(&item(app, "theme-night", "Tema: Gece", "")?)
-    .item(&item(app, "theme-typewriter", "Tema: Daktilo", "")?)
+  let ui_lang = SubmenuBuilder::with_id(app, "m-uilang", tx(l, "m-uilang", "Arayüz dili"))
+    .item(&item(app, l, "ui-lang-tr", "Türkçe", "")?)
+    .item(&item(app, l, "ui-lang-en", "English", "")?)
+    .item(&item(app, l, "ui-lang-de", "Deutsch", "")?)
+    .item(&item(app, l, "ui-lang-es", "Español", "")?)
+    .item(&item(app, l, "ui-lang-fr", "Français", "")?)
     .build()?;
-  let script = SubmenuBuilder::new(app, "Senaryo")
-    .item(&item(app, "title-page", "Başlık sayfası…", "")?)
-    .item(&item(app, "add-scene", "Sona sahne ekle", "")?)
-    .item(&item(app, "add-section", "Sona bölüm ekle", "")?)
-    .separator()
-    .item(&item(app, "dual", "Çift diyalog", "Ctrl+D")?)
-    .item(&item(app, "note", "Not ekle", "Ctrl+Shift+M")?)
-    .item(&item(app, "omit", "Metni kapat", "Ctrl+/")?)
-    .item(&item(app, "tag", "Etiketle", "Ctrl+T")?)
-    .separator()
-    .item(&item(app, "lock", "Sahne numaralarını kilitle / aç", "")?)
-    .separator()
-    .item(&item(app, "goals", "Yazma hedefleri…", "")?)
-    .item(&item(app, "sprint", "Süreli seans başlat / durdur", "")?)
+  let script_lang = SubmenuBuilder::with_id(app, "m-scriptlang", tx(l, "m-scriptlang", "Senaryo dili"))
+    .item(&item(app, l, "script-lang-tr", "Türkçe", "")?)
+    .item(&item(app, l, "script-lang-en", "English", "")?)
+    .item(&item(app, l, "script-lang-de", "Deutsch", "")?)
+    .item(&item(app, l, "script-lang-es", "Español", "")?)
+    .item(&item(app, l, "script-lang-fr", "Français", "")?)
     .build()?;
-  let revision = SubmenuBuilder::new(app, "Revizyon")
-    .item(&item(app, "rev-toggle", "Revizyon modu", "Ctrl+Shift+R")?)
-    .item(&item(app, "rev-next", "Sonraki revizyon kuşağı", "")?)
-    .item(&item(app, "rev-all-current", "Tüm işaretleri seçili kuşağa taşı", "")?)
+  let view = SubmenuBuilder::with_id(app, "m-view", tx(l, "m-view", "Görünüm"))
+    .item(&item(app, l, "tab-write", "Yaz", "")?)
+    .item(&item(app, l, "tab-board", "Pano", "")?)
+    .item(&item(app, l, "tab-outline", "Anahat", "")?)
+    .item(&item(app, l, "tab-characters", "Karakterler", "")?)
+    .item(&item(app, l, "tab-timeline", "Zaman çizelgesi", "")?)
+    .item(&item(app, l, "tab-stats", "İstatistikler", "")?)
     .separator()
-    .item(&item(app, "rev-commit", "Revizyonları onayla", "")?)
+    .item(&item(app, l, "focus", "Odak modu", "F11")?)
+    .item(&item(app, l, "inspector", "Ayrıntılar paneli", "Ctrl+Alt+I")?)
+    .separator()
+    .item(&item(app, l, "zoom-in", "Yakınlaştır", "Ctrl++")?)
+    .item(&item(app, l, "zoom-out", "Uzaklaştır", "Ctrl+-")?)
+    .item(&item(app, l, "zoom-reset", "Gerçek boyut", "Ctrl+0")?)
+    .separator()
+    .item(&item(app, l, "theme-dark", "Karanlık tema aç / kapat", "Ctrl+Shift+L")?)
+    .item(&item(app, l, "theme-paper", "Tema: Kâğıt", "")?)
+    .item(&item(app, l, "theme-night", "Tema: Gece", "")?)
+    .item(&item(app, l, "theme-typewriter", "Tema: Daktilo", "")?)
+    .separator()
+    .item(&ui_lang)
     .build()?;
-  let help = SubmenuBuilder::new(app, "Yardım")
-    .item(&item(app, "shortcuts", "Klavye kısayolları", "F1")?)
-    .item(&item(app, "update-check", "Güncellemeleri denetle…", "")?)
+  let script = SubmenuBuilder::with_id(app, "m-script", tx(l, "m-script", "Senaryo"))
+    .item(&item(app, l, "title-page", "Başlık sayfası…", "")?)
+    .item(&script_lang)
+    .item(&item(app, l, "add-scene", "Sona sahne ekle", "")?)
+    .item(&item(app, l, "add-section", "Sona bölüm ekle", "")?)
     .separator()
-    .item(&item(app, "about", "writetheFout. hakkında", "")?)
+    .item(&item(app, l, "dual", "Çift diyalog", "Ctrl+D")?)
+    .item(&item(app, l, "note", "Not ekle", "Ctrl+Shift+M")?)
+    .item(&item(app, l, "omit", "Metni gizle", "Ctrl+/")?)
+    .item(&item(app, l, "tag", "Etiketle", "Ctrl+T")?)
+    .separator()
+    .item(&item(app, l, "lock", "Sahne numaralarını kilitle / aç", "")?)
+    .separator()
+    .item(&item(app, l, "goals", "Yazma hedefleri…", "")?)
+    .item(&item(app, l, "sprint", "Süreli seans başlat / durdur", "")?)
+    .build()?;
+  let revision = SubmenuBuilder::with_id(app, "m-revision", tx(l, "m-revision", "Revizyon"))
+    .item(&item(app, l, "rev-toggle", "Revizyon modu", "Ctrl+Shift+R")?)
+    .item(&item(app, l, "rev-next", "Sonraki revizyon turu", "")?)
+    .item(&item(app, l, "rev-all-current", "Tüm işaretleri seçili tura taşı", "")?)
+    .separator()
+    .item(&item(app, l, "rev-commit", "Revizyonları onayla", "")?)
+    .build()?;
+  let help = SubmenuBuilder::with_id(app, "m-help", tx(l, "m-help", "Yardım"))
+    .item(&item(app, l, "shortcuts", "Klavye kısayolları", "F1")?)
+    .item(&item(app, l, "update-check", "Güncellemeleri denetle…", "")?)
+    .separator()
+    .item(&item(app, l, "about", "writetheFout. hakkında", "")?)
     .build()?;
   MenuBuilder::new(app).items(&[&file, &edit, &view, &script, &revision, &help]).build()
 }
@@ -253,6 +287,7 @@ pub fn run() {
     .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_updater::Builder::new().build())
     .plugin(tauri_plugin_process::init())
+    .plugin(tauri_plugin_http::init())
     .invoke_handler(tauri::generate_handler![
       write_file,
       read_file,
@@ -264,9 +299,10 @@ pub fn run() {
       backup_save,
       backup_list,
       backup_read,
-      backup_path
+      backup_path,
+      set_menu_labels
     ])
-    .menu(|app| build_menu(app))
+    .menu(|app| build_menu(app, &Labels::new()))
     .on_menu_event(|app, event| {
       // menü komutunu yalnızca odaktaki pencereye ilet
       let id = event.id().0.clone();

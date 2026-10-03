@@ -4,6 +4,7 @@ import type { FontSet } from './pdf';
 import regularUrl from '../assets/fonts/CourierPrime_400Regular.ttf?url';
 import boldUrl from '../assets/fonts/CourierPrime_700Bold.ttf?url';
 import italicUrl from '../assets/fonts/CourierPrime_400Regular_Italic.ttf?url';
+import { t } from '../i18n';
 import boldItalicUrl from '../assets/fonts/CourierPrime_700Bold_Italic.ttf?url';
 
 let fontCache: FontSet | null = null;
@@ -60,7 +61,7 @@ export async function pickFile(extensions: string[]): Promise<{ name: string; by
   if (isTauri()) {
     const { open } = await import('@tauri-apps/plugin-dialog');
     const { invoke } = await import('@tauri-apps/api/core');
-    const path = await open({ multiple: false, filters: [{ name: 'Senaryo', extensions }] });
+    const path = await open({ multiple: false, filters: [{ name: t('Senaryo'), extensions }] });
     if (!path || Array.isArray(path)) return null;
     const data = await invoke<number[]>('read_file', { path });
     return { name: path.split(/[\\/]/).pop() ?? path, bytes: new Uint8Array(data) };

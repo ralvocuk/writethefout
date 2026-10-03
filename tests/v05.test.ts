@@ -130,3 +130,12 @@ describe('yazım denetimi: şapkalı harfler', () => {
     for (const w of ['rüzgâr', 'Rüzgâr', 'kâğıt', 'hikâye']) expect(checkWord(sp, w)).toBe(true);
   }, 30000);
 });
+
+describe('yazım denetimi: yabancı özel adlar', () => {
+  it("kesmeli bilinmeyen özel ad doğru sayılır, küçük harfli olan sayılmaz", () => {
+    const sp = nspell(readFileSync('public/dict/tr.aff', 'utf8'), readFileSync('public/dict/tr.dic', 'utf8'));
+    expect(checkWord(sp, "DANNY'NİN")).toBe(true);
+    expect(checkWord(sp, "Danny'nin")).toBe(true);
+    expect(checkWord(sp, "danny'nin")).toBe(false);
+  }, 30000);
+});

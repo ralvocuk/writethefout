@@ -7,7 +7,7 @@ import { blockText, type Run, type ScriptBlock } from '../script/blocks';
 
 export type { Run, ScriptBlock };
 export type Paper = 'a4' | 'letter';
-export type Lang = 'tr' | 'en';
+export type Lang = 'tr' | 'en' | 'de' | 'es' | 'fr';
 
 export interface LayoutOptions {
   paper: Paper;
@@ -61,12 +61,120 @@ const DUAL: Record<'L' | 'R', Record<'character' | 'parenthetical' | 'dialogue' 
   },
 };
 
-export const LABELS: Record<Lang, { more: string; contd: string; written: string }> = {
-  tr: { more: '(DEVAM EDİYOR)', contd: '(DEVAM)', written: 'Yazan' },
-  en: { more: '(MORE)', contd: "(CONT'D)", written: 'Written by' },
+/** Senaryo dilleri: sayfa etiketleri, başlık sayfası, sahne başlığı önekleri ve revizyon adları o dilin sektör kurallarına göre */
+export interface ScriptLabels {
+  more: string;
+  contd: string;
+  written: string;
+  /** sahne başlığı önekleri (yardım metni ve otomatik tamamlama için) */
+  heads: string;
+  headings: string[];
+  times: string[];
+  transitions: string[];
+  /** boş sahne başlığında görünen örnek */
+  placeholder: string;
+  cue: string;
+  locale: string;
+  /** revizyon turu adı (1–8) */
+  revision: (gen: number) => string;
+}
+
+const REV_COLORS: Record<Lang, string[]> = {
+  tr: ['Mavi', 'Pembe', 'Sarı', 'Yeşil', 'Altın', 'Devetüyü', 'Gül', 'Kiraz'],
+  en: ['Blue', 'Pink', 'Yellow', 'Green', 'Goldenrod', 'Buff', 'Salmon', 'Cherry'],
+  de: ['Blau', 'Rosa', 'Gelb', 'Grün', 'Goldgelb', 'Chamois', 'Lachs', 'Kirsche'],
+  es: ['Azul', 'Rosa', 'Amarilla', 'Verde', 'Dorada', 'Beige', 'Salmón', 'Cereza'],
+  fr: ['Bleue', 'Rose', 'Jaune', 'Verte', 'Dorée', 'Chamois', 'Saumon', 'Cerise'],
 };
 
-export const upper = (s: string, lang: Lang) => (lang === 'tr' ? s.toLocaleUpperCase('tr-TR') : s.toUpperCase());
+export const SCRIPT_LANGS: { id: Lang; name: string }[] = [
+  { id: 'tr', name: 'Türkçe' },
+  { id: 'en', name: 'English' },
+  { id: 'de', name: 'Deutsch' },
+  { id: 'es', name: 'Español' },
+  { id: 'fr', name: 'Français' },
+];
+
+const SCRIPT: Record<Lang, Omit<ScriptLabels, 'revision'> & { rev: (c: string) => string }> = {
+  tr: {
+    more: '(DEVAM EDİYOR)',
+    contd: '(DEVAM)',
+    written: 'Yazan',
+    heads: 'İÇ. / DIŞ.',
+    headings: ['İÇ. ', 'DIŞ. ', 'İÇ/DIŞ. '],
+    times: ['GÜNDÜZ', 'GECE', 'SABAH', 'AKŞAM', 'ŞAFAK', 'DEVAM', 'AYNI ANDA'],
+    transitions: ['KESME:', 'KARARMA.', 'GEÇİŞ:', 'AÇILMA:'],
+    placeholder: 'İÇ. MEKÂN - GÜNDÜZ',
+    cue: 'İPUCU',
+    locale: 'tr-TR',
+    rev: (c) => `${c} revizyon`,
+  },
+  en: {
+    more: '(MORE)',
+    contd: "(CONT'D)",
+    written: 'Written by',
+    heads: 'INT. / EXT.',
+    headings: ['INT. ', 'EXT. ', 'INT./EXT. '],
+    times: ['DAY', 'NIGHT', 'MORNING', 'EVENING', 'DAWN', 'DUSK', 'CONTINUOUS', 'LATER', 'MOMENTS LATER'],
+    transitions: ['CUT TO:', 'FADE OUT.', 'DISSOLVE TO:', 'SMASH CUT TO:', 'FADE IN:'],
+    placeholder: 'INT. LOCATION - DAY',
+    cue: 'CUE',
+    locale: 'en-US',
+    rev: (c) => `${c} Revision`,
+  },
+  de: {
+    more: '(WEITER)',
+    contd: '(FORTS.)',
+    written: 'Drehbuch von',
+    heads: 'INNEN / AUSSEN',
+    headings: ['INNEN. ', 'AUSSEN. ', 'INNEN/AUSSEN. '],
+    times: ['TAG', 'NACHT', 'MORGEN', 'ABEND', 'DÄMMERUNG', 'FORTLAUFEND', 'SPÄTER'],
+    transitions: ['SCHNITT AUF:', 'ABBLENDE.', 'ÜBERBLENDE AUF:', 'AUFBLENDE:'],
+    placeholder: 'INNEN. ORT - TAG',
+    cue: 'STICHWORT',
+    locale: 'de-DE',
+    rev: (c) => `Revision ${c}`,
+  },
+  es: {
+    more: '(SIGUE)',
+    contd: '(CONT.)',
+    written: 'Escrito por',
+    heads: 'INT. / EXT.',
+    headings: ['INT. ', 'EXT. ', 'INT./EXT. '],
+    times: ['DÍA', 'NOCHE', 'MAÑANA', 'TARDE', 'AMANECER', 'ATARDECER', 'CONTINUO', 'MÁS TARDE'],
+    transitions: ['CORTE A:', 'FUNDIDO A NEGRO.', 'ENCADENADO A:', 'FUNDIDO DE ENTRADA:'],
+    placeholder: 'INT. LUGAR - DÍA',
+    cue: 'PIE',
+    locale: 'es-ES',
+    rev: (c) => `Revisión ${c.toLocaleLowerCase('es')}`,
+  },
+  fr: {
+    more: '(À SUIVRE)',
+    contd: '(SUITE)',
+    written: 'Écrit par',
+    heads: 'INT. / EXT.',
+    headings: ['INT. ', 'EXT. ', 'INT./EXT. '],
+    times: ['JOUR', 'NUIT', 'MATIN', 'SOIR', 'AUBE', 'CRÉPUSCULE', 'CONTINU', 'PLUS TARD'],
+    transitions: ['COUPE SUR :', 'FONDU AU NOIR.', 'ENCHAÎNÉ SUR :', 'OUVERTURE AU NOIR :'],
+    placeholder: 'INT. LIEU - JOUR',
+    cue: 'RÉPLIQUE',
+    locale: 'fr-FR',
+    rev: (c) => `Révision ${c.toLocaleLowerCase('fr')}`,
+  },
+};
+
+export function scriptLabels(lang: Lang): ScriptLabels {
+  const s = SCRIPT[lang] ?? SCRIPT.tr;
+  const colors = REV_COLORS[lang] ?? REV_COLORS.tr;
+  return { ...s, revision: (gen) => s.rev(colors[Math.max(0, Math.min(7, gen - 1))]) };
+}
+
+/** Eski arayüz */
+export const LABELS: Record<Lang, { more: string; contd: string; written: string }> = new Proxy({} as Record<Lang, { more: string; contd: string; written: string }>, {
+  get: (_o, k) => scriptLabels(k as Lang),
+});
+
+export const upper = (s: string, lang: Lang) => (lang === 'tr' ? s.toLocaleUpperCase('tr-TR') : s.toLocaleUpperCase(scriptLabels(lang).locale));
 
 export interface PLine {
   el: El | 'more';

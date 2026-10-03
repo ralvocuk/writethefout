@@ -8,7 +8,7 @@ etiketler, revizyon işaretleri ve sahne kimlikleri dosyanın sonundaki bir yoru
 bu bloğu görmezden gelir. Uygulamanın kendi veritabanında yalnızca son açılanlar, anlık görüntüler ve günlük
 sayaç tutulur.
 
-**Sürüm 0.5**
+**Sürüm 0.6**
 
 ## Kurulum dosyasını üretmek
 
@@ -82,6 +82,23 @@ indirip kurar ve yeniden açılır. Elle denetlemek için: Yardım › Güncelle
 | İstatistik | Sayfa, süre, iç/dış, gündüz/gece, mekanlar, replikler; prodüksiyon dökümü (CSV) |
 | Önizleme | Basılacak sayfaların birebir görünümü, başlık sayfası, sistem yazdırma penceresi |
 
+## Diller
+
+- **Arayüz dili:** Türkçe, English, Deutsch, Español, Français. Açılış ekranının sağ üstünden ya da
+  Görünüm › Arayüz dili menüsünden değişir; uygulama yeniden başlamaz, menü çubuğu da çevrilir.
+- **Senaryo dili** (belge başına; Senaryo › Senaryo dili ya da Dışa aktar penceresi): sayfa etiketleri
+  ((DEVAM EDİYOR)/(DEVAM), (MORE)/(CONT'D), (WEITER)/(FORTS.), (SIGUE)/(CONT.), (À SUIVRE)/(SUITE)),
+  başlık sayfası yazar satırı, revizyon renk adları, sahne başlığı ve geçiş önerileri, büyük harf kuralı
+  (Türkçede i → İ). Almanca INNEN/AUSSEN başlıkları tanınır.
+- **TDK yazım önerileri** (Türkçe senaryolarda): yazmayı bıraktığın kelime TDK Güncel Türkçe Sözlük'te farklı
+  yazılıyorsa (mekan → mekân, hikayeyi → hikâyeyi) altında öneri çıkar; **Enter** kabul eder, **Esc** kapatır.
+  Anlamı değişen çiftlere (kar/kâr, hala/hâlâ) dokunmaz. Daha önce bulunanlar noktalı mavi çizgiyle görünür,
+  sağ tıkla düzeltilir. Kelimeler sozluk.gov.tr'ye gider, sonuçlar bilgisayarda saklanır; Düzen menüsünden kapatılır.
+- **Yazım denetimi** senaryo diline göre: Türkçe, İngilizce, İspanyolca. Almanca ve Fransızca sözlükler
+  (bileşik kelime desteği ve bellek kullanımı yüzünden) henüz yok.
+- Çeviriler `src/i18n/locales/*.json` içinde; anahtarlar Türkçe kaynak metinlerdir.
+  `node scripts/i18n-extract.mjs` anahtarları çıkarır, `node scripts/i18n-check.mjs` eksik ve hatalı çevirileri bulur.
+
 ## Yazma hedefleri
 
 Durum çubuğundaki çentiklere tıkla (ya da Senaryo › Yazma hedefleri): günlük kelime hedefi, üst üste kaç gün
@@ -121,5 +138,5 @@ Uygulama verileri: `%APPDATA%\app.writethefout.desktop\` (`writethefout.db`, `ye
 npm install
 npm run app        # geliştirme modunda masaüstü uygulaması
 npm run installer  # kurulum dosyası
-npm test           # 68 test: tuş akışı, revizyon, sayfalama, dosya biçimi, içe/dışa aktarma, PDF, yazım, hedefler, oyuncu sayfaları
+npm test           # 83 test: tuş akışı, revizyon, sayfalama, dosya biçimi, içe/dışa aktarma, PDF, yazım, hedefler, oyuncu sayfaları, çeviriler, senaryo dilleri
 ```

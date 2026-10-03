@@ -4,6 +4,7 @@
  */
 import { create } from 'zustand';
 import { isTauri } from './data/repository';
+import { t } from './i18n';
 import { useStore } from './store/useStore';
 
 type Phase = 'idle' | 'checking' | 'available' | 'none' | 'downloading' | 'ready' | 'error' | 'unconfigured';
@@ -68,7 +69,7 @@ export async function checkForUpdates(manual = false) {
 
 export async function installUpdate() {
   if (!pending) return;
-  if (!(await useStore.getState().guardUnsaved('güncellemeden önce'))) return;
+  if (!(await useStore.getState().guardUnsaved(t('Güncellemeden önce kaydedilsin mi?')))) return;
   useUpdate.setState({ phase: 'downloading', progress: 0, error: null });
   let total = 0;
   let got = 0;

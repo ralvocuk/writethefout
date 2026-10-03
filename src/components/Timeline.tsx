@@ -1,5 +1,6 @@
 import { useStore } from '../store/useStore';
 import { colorVar, formatEighths } from '../script/elements';
+import { t } from '../i18n';
 
 
 /** Zaman çizelgesi: sahneler uzunluklarıyla yan yana; altında karakter şeritleri. */
@@ -10,7 +11,7 @@ export function Timeline() {
   const openScript = useStore((s) => s.openScript);
   const cursorSid = useStore((s) => s.cursorSid);
   const scenes = model?.scenes ?? [];
-  if (!scenes.length) return <div className="view-pad"><p className="hint">Henüz sahne yok.</p></div>;
+  if (!scenes.length) return <div className="view-pad"><p className="hint">{t('Henüz sahne yok.')}</p></div>;
 
   // kısa senaryolar ekranı doldursun, uzunlar kaydırılsın
   const totalEighths = scenes.reduce((a, s) => a + s.eighths, 0);
@@ -24,49 +25,49 @@ export function Timeline() {
   // bölüm bantları
   const bands: { title: string; from: number; to: number }[] = [];
   scenes.forEach((s, i) => {
-    const t = s.section ?? '';
+    const title = s.section ?? '';
     const last = bands.at(-1);
-    if (last && last.title === t) last.to = lefts[i] + widths[i];
-    else bands.push({ title: t, from: lefts[i], to: lefts[i] + widths[i] });
+    if (last && last.title === title) last.to = lefts[i] + widths[i];
+    else bands.push({ title, from: lefts[i], to: lefts[i] + widths[i] });
   });
   // hikâye günleri
   const days: { title: string; from: number; to: number }[] = [];
   scenes.forEach((s, i) => {
-    const t = metas[s.sid]?.storyDay ?? '';
+    const title = metas[s.sid]?.storyDay ?? '';
     const last = days.at(-1);
-    if (last && last.title === t) last.to = lefts[i] + widths[i];
-    else days.push({ title: t, from: lefts[i], to: lefts[i] + widths[i] });
+    if (last && last.title === title) last.to = lefts[i] + widths[i];
+    else days.push({ title, from: lefts[i], to: lefts[i] + widths[i] });
   });
 
   return (
     <div className="view-pad timeline-wrap">
       <p className="hint" style={{ marginTop: 0 }}>
-        Her blok bir sahne; genişliği sayfa uzunluğuyla orantılı, çizgili bloklar dış mekan. Tıklayınca sahneye gider.
+        {t('Her blok bir sahne; genişliği sayfa uzunluğuyla orantılı, çizgili bloklar dış mekân. Tıklayınca sahneye gider.')}
       </p>
       <div className="timeline scroll">
         <div className="tl-inner" style={{ width: total + 140 }}>
           <div className="tl-row tl-bands">
-            <span className="tl-label">Bölüm</span>
+            <span className="tl-label">{t('Bölüm')}</span>
             <div className="tl-track">
               {bands.map((b, i) => (
-                <div key={i} className={`tl-band ${b.title ? '' : 'empty'}`} style={{ left: b.from, width: b.to - b.from }}>
+                <div key={i} className={`tl-band ${b.title ? '' : 'empty'}`} lang={model?.blocks ? useStore.getState().settings.lang : undefined} style={{ left: b.from, width: b.to - b.from }}>
                   {b.title}
                 </div>
               ))}
             </div>
           </div>
           <div className="tl-row tl-bands">
-            <span className="tl-label">Gün</span>
+            <span className="tl-label">{t('Gün')}</span>
             <div className="tl-track">
               {days.map((b, i) => (
-                <div key={i} className={`tl-band day ${b.title ? '' : 'empty'}`} style={{ left: b.from, width: b.to - b.from }}>
+                <div key={i} className={`tl-band day ${b.title ? '' : 'empty'}`} lang={useStore.getState().settings.lang} style={{ left: b.from, width: b.to - b.from }}>
                   {b.title}
                 </div>
               ))}
             </div>
           </div>
           <div className="tl-row tl-scenes">
-            <span className="tl-label">Sahneler</span>
+            <span className="tl-label">{t('Sahneler')}</span>
             <div className="tl-track">
               {scenes.map((s, i) => {
                 const c = colorVar(metas[s.sid]?.color);
@@ -75,7 +76,7 @@ export function Timeline() {
                     key={s.sid}
                     className={`tl-scene ${cursorSid === s.sid ? 'active' : ''} ${s.intExt === 'DIŞ' ? 'ext' : ''}`}
                     style={{ left: lefts[i], width: widths[i], ['--c' as string]: c ? `var(${c})` : 'var(--rule-strong)' }}
-                    title={`${s.number}. ${s.heading}\n${formatEighths(s.eighths)} sayfa${metas[s.sid]?.synopsis ? `\n${metas[s.sid].synopsis}` : ''}`}
+                    title={`${s.number}. ${s.heading}\n${t('{len} sayfa', { len: formatEighths(s.eighths) })}${metas[s.sid]?.synopsis ? `\n${metas[s.sid].synopsis}` : ''}`}
                     onClick={() => openScript(s.sid)}
                   >
                     <span className="num">{s.number}</span>
@@ -113,7 +114,7 @@ export function Timeline() {
               {scenes.map((s, i) =>
                 i === 0 || s.page !== scenes[i - 1].page ? (
                   <span key={s.sid} className="tl-tick num" style={{ left: lefts[i] }}>
-                    s.{s.page}
+                    {t('s.{n}', { n: s.page })}
                   </span>
                 ) : null,
               )}

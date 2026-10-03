@@ -2,13 +2,17 @@
  * Yazım denetimi istemcisi: işçiyle konuşur, sonuçları önbelleğe alır,
  * kişisel sözlüğü ve "yoksay" listesini tutar.
  */
-import { normalizeWord } from './engine';
+import { SPELL_LANGS, normalizeWord, type SpellLang } from './engine';
 
 type Listener = () => void;
+
+/** Sahne başlığı önekleri ve senaryo kısaltmaları her dilde doğru sayılır */
+const SCREENPLAY_TERMS = /^(INT|EXT|EST|INNEN|AUSSEN|AUẞEN|İÇ|DIŞ|V\.?O|O\.?S|O\.?C|CONT'?D|FORTS|POV)$/iu;
 export type SpellStatus = 'off' | 'loading' | 'ready' | 'error';
 
 const USER_KEY = 'wtf.spell.user';
-const lower = (w: string) => normalizeWord(w).toLocaleLowerCase('tr-TR');
+let lowerLocale = 'tr-TR';
+const lower = (w: string) => normalizeWord(w).toLocaleLowerCase(lowerLocale);
 
 function readUser(): string[] {
   try {
@@ -21,6 +25,8 @@ function readUser(): string[] {
 
 class SpellClient {
   status: SpellStatus = 'off';
+  /** etkin sözlük dili */
+  lang: SpellLang = 'tr';
   private worker: Worker | null = null;
   private seq = 0;
   private waiting = new Map<number, (v: unknown) => void>();
@@ -54,6 +60,25 @@ class SpellClient {
     });
   }
 
+  /** Senaryo dili için sözlük var mı */
+  supports(lang: string): lang is SpellLang {
+    return (SPELL_LANGS as string[]).includes(lang);
+  }
+
+  /** Dil değişince işçiyi kapat, önbelleği boşalt; sonraki start() yeni sözlüğü yükler */
+  setLang(lang: SpellLang) {
+    if (lang === this.lang) return;
+    this.lang = lang;
+    lowerLocale = lang === 'tr' ? 'tr-TR' : lang;
+    this.worker?.terminate();
+    this.worker = null;
+    this.waiting.clear();
+    this.cache.clear();
+    this.inflight.clear();
+    this.status = 'off';
+    this.emit();
+  }
+
   /** Sözlüğü (ilk kullanımda) yükle */
   start() {
     if (this.worker || typeof Worker === 'undefined') return;
@@ -69,7 +94,7 @@ class SpellClient {
       this.status = 'error';
       this.emit();
     };
-    this.call({ type: 'load', base: new URL(import.meta.env.BASE_URL || '/', window.location.href).href })
+    this.call({ type: 'load', lang: this.lang, base: new URL(import.meta.env.BASE_URL || '/', window.location.href).href })
       .then(() => {
         this.status = 'ready';
         this.emit();
@@ -82,6 +107,7 @@ class SpellClient {
 
   /** true: hatalı, false: doğru, undefined: henüz bilinmiyor (istek kuyruğa alınır) */
   isWrong(word: string): boolean | undefined {
+    if (SCREENPLAY_TERMS.test(word)) return false;
     const k = lower(word);
     if (this.user.has(k) || this.ignored.has(k) || this.names.has(k)) return false;
     const base = k.split("'")[0];

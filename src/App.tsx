@@ -24,13 +24,15 @@ import {
   Toast,
   runBackup,
 } from './components/Dialogs';
-import { keyToCommand, runCommand } from './commands';
+import { commands, keyToCommand, runCommand } from './commands';
+import { useLang } from './i18n';
 import { GoalsDialog, useSprintTimer } from './components/Goals';
 import { DictionaryDialog } from './components/Spelling';
 import { SidesDialog } from './components/Sides';
 import { UpdateDialog } from './components/Update';
 import { scheduleStartupCheck } from './updater';
-import { onCloseRequested, onMenu, setWindowTheme, setWindowTitle } from './data/files';
+import { onCloseRequested, onMenu, setMenuLabels, setWindowTheme, setWindowTitle } from './data/files';
+import { t } from './i18n';
 import { isTauri } from './data/repository';
 
 const BACKUP_EVERY = 5 * 60 * 1000;
@@ -61,6 +63,8 @@ export default function App() {
   const inspector = useStore((s) => s.inspector);
   const active = useStore((s) => s.active);
   const title = useStore((s) => windowTitle(s));
+  // arayüz dili değişince tüm ağaç yeniden çizilir (bileşenler memo değil)
+  const uiLang = useLang((s) => s.lang);
 
   useEffect(() => {
     useStore.getState().init();
@@ -75,12 +79,32 @@ export default function App() {
 
   useEffect(() => {
     setWindowTitle(title).catch(() => {});
-  }, [title]);
+  }, [title, uiLang]);
+
+  // yerel menü çubuğu da arayüz dilinde
+  useEffect(() => {
+    const labels: Record<string, string> = {
+      'm-file': t('Dosya'),
+      'm-edit': t('Düzen'),
+      'm-view': t('Görünüm'),
+      'm-script': t('Senaryo'),
+      'm-revision': t('Revizyon'),
+      'm-help': t('Yardım'),
+      'm-uilang': t('Arayüz dili'),
+      'm-scriptlang': t('Senaryo dili'),
+      cut: t('Kes'),
+      copy: t('Kopyala'),
+      paste: t('Yapıştır'),
+      'select-all': t('Tümünü seç'),
+    };
+    for (const c of commands()) if (!c.id.startsWith('ui-lang-') && !c.id.startsWith('script-lang-')) labels[c.id] = c.label;
+    setMenuLabels(labels).catch(() => {});
+  }, [uiLang]);
 
   // Kapatırken kaydedilmemiş değişiklikleri sor
   useEffect(() => {
     let unlisten: (() => void) | undefined;
-    onCloseRequested(() => useStore.getState().guardUnsaved('pencereyi kapatmadan önce')).then((u) => (unlisten = u));
+    onCloseRequested(() => useStore.getState().guardUnsaved(t('Pencereyi kapatmadan önce kaydedilsin mi?'))).then((u) => (unlisten = u));
     const beforeUnload = (e: BeforeUnloadEvent) => {
       if (!isTauri() && useStore.getState().doc.dirty) e.preventDefault();
     };

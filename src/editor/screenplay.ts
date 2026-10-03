@@ -2,7 +2,8 @@ import { Extension, Mark, Node, mergeAttributes, type Editor } from '@tiptap/cor
 import { Plugin, PluginKey, TextSelection, type EditorState, type Transaction } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import type { Node as PMNode } from '@tiptap/pm/model';
-import { CORE, EXTRA, baseName, upperTr, type El } from '../script/elements';
+import { CORE, EXTRA, HEADING_PREFIX, baseName, upperTr, type El } from '../script/elements';
+import { scriptLabels, type Lang } from '../export/layout';
 
 export { EL_LABEL } from '../script/elements';
 export type ScreenplayElement = El;
@@ -61,9 +62,9 @@ export const SHIFT_TAB_NEXT: Record<El, El> = {
   pageBreak: 'action',
 };
 
-const HEADING_RE = /^(İÇ\/DIŞ|DIŞ\/İÇ|İÇ|DIŞ|INT\/EXT|EXT\/INT|INT|EXT|I\/E|EST)\.\s/u;
-const TRANSITION_RE = /^[A-ZÇĞİÖŞÜ\s]+(:|\.)$/u;
-const TRANSITION_WORDS = /(KESME|GEÇİŞ|KARARMA|AÇILMA|CUT TO|FADE (IN|OUT)|DISSOLVE TO|SMASH CUT)/u;
+const HEADING_RE = new RegExp(`^(${HEADING_PREFIX})\\.\\s`, 'u');
+const TRANSITION_RE = /^[\p{Lu}\s]+\s?(:|\.)$/u;
+const TRANSITION_WORDS = /(KESME|GEÇİŞ|KARARMA|AÇILMA|CUT TO|FADE (IN|OUT)|DISSOLVE TO|SMASH CUT|SCHNITT|ÜBERBLENDE|ABBLENDE|AUFBLENDE|CORTE A|FUNDIDO|ENCADENADO|COUPE|FONDU|ENCHAÎNÉ)/u;
 
 /** Aksiyon satırının metninden elemanı tahmin eder. */
 export function detectElement(text: string, current: El, prev: El | null): El {
@@ -81,8 +82,9 @@ export function detectElement(text: string, current: El, prev: El | null): El {
 
 export { baseName, upperTr };
 
-export const STANDARD_HEADINGS = ['İÇ. ', 'DIŞ. ', 'İÇ/DIŞ. '];
-export const TIMES = ['GÜNDÜZ', 'GECE', 'SABAH', 'AKŞAM', 'ŞAFAK', 'DEVAM', 'AYNI ANDA'];
+/** Otomatik tamamlama: senaryo diline göre başlık önekleri ve günün saatleri */
+export const STANDARD_HEADINGS = (lang: Lang = 'tr') => scriptLabels(lang).headings;
+export const TIMES = (lang: Lang = 'tr') => scriptLabels(lang).times;
 
 /** Ghost metin önerisi: yazılana uyan ilk adayın kalan kısmı. */
 export function suggest(typed: string, candidates: string[]): string {
@@ -227,7 +229,7 @@ function revDelete(editor: Editor, dir: -1 | 1, gen: number): boolean {
 /* ---------- Davranış ---------- */
 
 export interface ScreenplayOptions {
-  known: () => { names: string[]; headings: string[] };
+  known: () => { names: string[]; headings: string[]; lang?: Lang };
   revision: () => { on: boolean; gen: number };
 }
 
@@ -268,11 +270,11 @@ function computeGhost(state: EditorState, opts: ScreenplayOptions): GhostState {
   }
   if (el === 'sceneHeading') {
     const dash = typed.lastIndexOf(' - ');
-    if (dash >= 0) return { text: suggest(typed.slice(dash + 3), TIMES), pos: $p.pos };
+    if (dash >= 0) return { text: suggest(typed.slice(dash + 3), TIMES(ext.lang)), pos: $p.pos };
     const pool = [...new Set([...local.headings, ...ext.headings])].sort();
-    return { text: suggest(typed, [...STANDARD_HEADINGS, ...pool]), pos: $p.pos };
+    return { text: suggest(typed, [...STANDARD_HEADINGS(ext.lang), ...pool]), pos: $p.pos };
   }
-  return { text: suggest(typed, ['KESME:', 'KARARMA.', 'GEÇİŞ:', 'AÇILMA:']), pos: $p.pos };
+  return { text: suggest(typed, scriptLabels(ext.lang ?? 'tr').transitions), pos: $p.pos };
 }
 
 export function setElement(editor: Editor, el: El): boolean {

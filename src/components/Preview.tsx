@@ -8,7 +8,7 @@ import {
   MARGIN_TOP,
   PAPER,
   RIGHT_EDGE,
-  LABELS,
+  scriptLabels,
   numberScenes,
   paginate,
   titlePageLayout,
@@ -16,7 +16,7 @@ import {
   type Paper,
   type Run,
 } from '../export/layout';
-import { REVISIONS } from '../script/elements';
+import { t } from '../i18n';
 
 const len = (s: string) => [...s].length;
 
@@ -64,7 +64,7 @@ export function Preview() {
   const revised = pages.filter((p) => p.lines.some((l) => l?.rev || l?.pair?.rev)).map((p) => p.number);
   const shown = opts.revisedOnly ? pages.filter((p) => revised.includes(p.number)) : pages;
   const { w, h } = PAPER[settings.paper];
-  const revLabel = `${settings.lang === 'tr' ? `${REVISIONS[settings.revisionGen - 1].name} revizyon` : `${REVISIONS[settings.revisionGen - 1].en} Revision`} — ${new Date().toLocaleDateString(settings.lang === 'tr' ? 'tr-TR' : 'en-US')}`;
+  const revLabel = `${scriptLabels(settings.lang).revision(settings.revisionGen)} — ${new Date().toLocaleDateString(scriptLabels(settings.lang).locale)}`;
   const showTitle = opts.titlePage && !opts.revisedOnly && !!title.title;
 
   // yazdırma için sayfa boyutu
@@ -82,7 +82,7 @@ export function Preview() {
     <div className="preview">
       <div className="pv-toolbar">
         <button className="btn primary" onClick={() => window.print()}>
-          <Printer size={15} weight="light" /> Yazdır
+          <Printer size={15} weight="light" /> {t('Yazdır')}
         </button>
         <div className="segmented small">
           {(['a4', 'letter'] as Paper[]).map((p) => (
@@ -92,24 +92,24 @@ export function Preview() {
           ))}
         </div>
         <label className="check-inline">
-          <input type="checkbox" checked={opts.titlePage} onChange={(e) => set({ titlePage: e.target.checked })} /> Başlık sayfası
+          <input type="checkbox" checked={opts.titlePage} onChange={(e) => set({ titlePage: e.target.checked })} /> {t('Başlık sayfası')}
         </label>
         <label className="check-inline">
-          <input type="checkbox" checked={opts.sceneNumbers} onChange={(e) => set({ sceneNumbers: e.target.checked })} /> Sahne numaraları
+          <input type="checkbox" checked={opts.sceneNumbers} onChange={(e) => set({ sceneNumbers: e.target.checked })} /> {t('Sahne numaraları')}
         </label>
         {revised.length ? (
           <>
             <label className="check-inline">
-              <input type="checkbox" checked={opts.revisionMarks} onChange={(e) => set({ revisionMarks: e.target.checked })} /> Revizyon işaretleri
+              <input type="checkbox" checked={opts.revisionMarks} onChange={(e) => set({ revisionMarks: e.target.checked })} /> {t('Revizyon işaretleri')}
             </label>
             <label className="check-inline">
-              <input type="checkbox" checked={opts.revisedOnly} onChange={(e) => set({ revisedOnly: e.target.checked })} /> Yalnız değişen sayfalar
+              <input type="checkbox" checked={opts.revisedOnly} onChange={(e) => set({ revisedOnly: e.target.checked })} /> {t('Yalnızca değişen sayfalar')}
             </label>
           </>
         ) : null}
         <span className="grow" />
         <span className="muted num">
-          {shown.length} sayfa{showTitle ? ' + başlık' : ''}
+          {t('{n} sayfa', { n: shown.length })}{showTitle ? ` + ${t('başlık')}` : ''}
         </span>
         <input
           type="range"
@@ -118,7 +118,7 @@ export function Preview() {
           step={0.05}
           value={opts.scale}
           onChange={(e) => set({ scale: Number(e.target.value) })}
-          aria-label="Önizleme ölçeği"
+          aria-label={t('Önizleme ölçeği')}
         />
       </div>
       <div className="pv-pages print-root" style={{ ['--pv-scale' as string]: opts.scale }}>
@@ -185,8 +185,10 @@ export function Preview() {
         })}
       </div>
       <p className="hint pv-hint">
-        Önizleme, PDF ile aynı sayfalama motorunu kullanır. {LABELS[settings.lang].more} ve {LABELS[settings.lang].contd} sayfa geçişlerinde
-        otomatik eklenir.
+        {t('Önizleme, PDF ile aynı sayfalama motorunu kullanır. {more} ve {contd} sayfa geçişlerinde otomatik eklenir.', {
+          more: scriptLabels(settings.lang).more,
+          contd: scriptLabels(settings.lang).contd,
+        })}
       </p>
     </div>
   );

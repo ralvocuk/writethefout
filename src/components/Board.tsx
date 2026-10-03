@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { STATUS_LABEL } from '../data/types';
-import { colorVar, formatEighths } from '../script/elements';
+import { SCENE_COLORS, colorVar, formatEighths } from '../script/elements';
+import { t } from '../i18n';
 import type { SceneInfo } from '../script/model';
 
 /** Kartın hafif, kalıcı eğimi: kimliğinden türetilir. */
@@ -28,16 +29,16 @@ export function Board() {
   const groups: { title: string; idx: number | null; cards: SceneInfo[] }[] = [];
   for (const s of model?.scenes ?? []) {
     const last = groups.at(-1);
-    if (!last || last.title !== (s.section ?? 'Senaryo')) {
+    if (!last || last.title !== (s.section ?? t('Senaryo'))) {
       const sec = model!.sections.filter((x) => x.idx < s.idx).at(-1);
-      groups.push({ title: s.section ?? 'Senaryo', idx: s.section ? (sec?.idx ?? null) : null, cards: [s] });
+      groups.push({ title: s.section ?? t('Senaryo'), idx: s.section ? (sec?.idx ?? null) : null, cards: [s] });
     } else last.cards.push(s);
   }
 
   return (
     <div className="board">
       <FilterBar />
-      {groups.length === 0 ? <p className="hint">Henüz sahne yok. Yaz sekmesinde bir sahne başlığı yaz.</p> : null}
+      {groups.length === 0 ? <p className="hint">{t('Henüz sahne yok. Yaz sekmesinde bir sahne başlığı yaz.')}</p> : null}
       {groups.map((g, gi) => (
         <section className="board-group" key={`${g.idx}-${gi}`}>
           <div
@@ -57,7 +58,7 @@ export function Board() {
           >
             <span>{g.title}</span>
             <span className="num">
-              {g.cards.length} sahne · {formatEighths(g.cards.reduce((a, c) => a + c.eighths, 0))} sayfa
+              {t('{n} sahne', { n: g.cards.length })} · {t('{len} sayfa', { len: formatEighths(g.cards.reduce((a, c) => a + c.eighths, 0)) })}
             </span>
           </div>
           <div className="cards">
@@ -103,15 +104,15 @@ function Card({ scene }: { scene: SceneInfo }) {
         setDrop(false);
       }}
     >
-      <div className="card-title">
+      <div className="card-title" lang={useStore.getState().settings.lang}>
         <span className="card-no num">{scene.number}</span>
-        <span className="card-heading">{scene.heading || 'Başlıksız'}</span>
+        <span className="card-heading">{scene.heading || t('Başlıksız sahne')}</span>
       </div>
       {meta?.status === 'done' ? <span className="status-stamp">{STATUS_LABEL.done}</span> : null}
-      <div className={`card-body ${meta?.synopsis ? '' : 'empty'}`}>{meta?.synopsis || 'Özet yazılmadı.'}</div>
+      <div className={`card-body ${meta?.synopsis ? '' : 'empty'}`}>{meta?.synopsis || t('Özet yazılmadı.')}</div>
       <div className="card-foot">
         <span className="card-chars">{scene.characters.slice(0, 3).join(', ') || '—'}</span>
-        <span className="num">{formatEighths(scene.eighths)} s.</span>
+        <span className="num">{t('{len} s.', { len: formatEighths(scene.eighths) })}</span>
       </div>
     </button>
   );
@@ -125,9 +126,9 @@ export function FilterBar() {
   const any = filter.character || filter.color || filter.location;
   return (
     <div className="filterbar">
-      <span className="label">Süz</span>
+      <span className="label">{t('Filtrele')}</span>
       <select value={filter.character ?? ''} onChange={(e) => setFilter({ character: e.target.value || null })}>
-        <option value="">Tüm karakterler</option>
+        <option value="">{t('Tüm karakterler')}</option>
         {model?.characters.map((c) => (
           <option key={c.name} value={c.name}>
             {c.name}
@@ -135,7 +136,7 @@ export function FilterBar() {
         ))}
       </select>
       <select value={filter.location ?? ''} onChange={(e) => setFilter({ location: e.target.value || null })}>
-        <option value="">Tüm mekanlar</option>
+        <option value="">{t('Tüm mekânlar')}</option>
         {locations.map((l) => (
           <option key={l} value={l}>
             {l}
@@ -143,16 +144,16 @@ export function FilterBar() {
         ))}
       </select>
       <select value={filter.color ?? ''} onChange={(e) => setFilter({ color: e.target.value || null })}>
-        <option value="">Tüm renkler</option>
-        {['indigo', 'earth', 'olive', 'bordeaux', 'mustard', 'slate'].map((c) => (
-          <option key={c} value={c}>
-            {{ indigo: 'Lacivert', earth: 'Toprak', olive: 'Zeytin', bordeaux: 'Bordo', mustard: 'Hardal', slate: 'Arduvaz' }[c]}
+        <option value="">{t('Tüm renkler')}</option>
+        {SCENE_COLORS.map((c) => (
+          <option key={c.id} value={c.id}>
+            {t(c.name)}
           </option>
         ))}
       </select>
       {any ? (
         <button className="text-btn" onClick={() => setFilter({ character: null, color: null, location: null })}>
-          Temizle
+          {t('Temizle')}
         </button>
       ) : null}
     </div>

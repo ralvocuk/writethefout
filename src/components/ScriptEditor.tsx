@@ -18,7 +18,10 @@ import {
 } from '../editor/screenplay';
 import { Pagination, pageAt } from '../editor/pagination';
 import { SpellCheck, errorAt, replaceWord, type SpellHit } from '../editor/spell';
+import { TdkSuggest, tdkAt } from '../editor/tdk';
 import { spell } from '../spell/client';
+import { locale, t } from '../i18n';
+import { scriptLabels } from '../export/layout';
 import { Search, gotoMatch, replaceAll, replaceCurrent, searchKey, setSearch } from '../editor/search';
 import { EL_LABEL, TAG_CATS, formatEighths, formatNumber, type El } from '../script/elements';
 
@@ -47,9 +50,9 @@ function EditorInner() {
   const sheetRef = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const pending = useRef<Editor | null>(null);
-  const [flag, setFlag] = useState<{ el: El; top: number } | null>(null);
+  const [flag, setFlag] = useState<{ el: El; top: number; num: boolean } | null>(null);
   const [tagMenu, setTagMenu] = useState<{ x: number; y: number } | null>(null);
-  const [spellMenu, setSpellMenu] = useState<{ x: number; y: number; hit: SpellHit; options: string[] | null } | null>(null);
+  const [spellMenu, setSpellMenu] = useState<{ x: number; y: number; hit: SpellHit; options: string[] | null; tdk?: string } | null>(null);
   const spellOn = useStore((s) => s.spellOn);
   const initial = useMemo(() => {
     const d = useStore.getState().script;
@@ -85,7 +88,7 @@ function EditorInner() {
     const dom = ed.view.nodeDOM($from.before(1)) as HTMLElement | null;
     const sheet = sheetRef.current;
     const z = useStore.getState().zoom || 1;
-    if (dom && sheet) setFlag({ el, top: (dom.getBoundingClientRect().top - sheet.getBoundingClientRect().top) / z + 3 });
+    if (dom && sheet) setFlag({ el, top: (dom.getBoundingClientRect().top - sheet.getBoundingClientRect().top) / z + 3, num: dom.hasAttribute('data-num') });
   };
 
   const typewriter = (ed: Editor) => {
@@ -123,11 +126,15 @@ function EditorInner() {
       RevMark,
       DelMark,
       Search,
-      SpellCheck.configure({ enabled: () => useStore.getState().spellOn && useStore.getState().settings.lang !== 'en' }),
+      TdkSuggest.configure({
+        enabled: () => useStore.getState().tdkOn && useStore.getState().settings.lang === 'tr',
+        hint: () => t('TDK yazımı'),
+      }),
+      SpellCheck.configure({ enabled: () => useStore.getState().spellOn && spell.supports(useStore.getState().settings.lang) }),
       ScreenplayKeys.configure({
         known: () => {
           const m = useStore.getState().model;
-          return { names: m?.characters.map((c) => c.name) ?? [], headings: m?.scenes.map((s) => s.heading) ?? [] };
+          return { names: m?.characters.map((c) => c.name) ?? [], headings: m?.scenes.map((s) => s.heading) ?? [], lang: useStore.getState().settings.lang };
         },
         revision: () => {
           const st = useStore.getState().settings;
@@ -135,7 +142,13 @@ function EditorInner() {
         },
       }),
       Placeholder.configure({
-        placeholder: ({ node }) => SCREENPLAY_PLACEHOLDER[node.attrs.el as El] ?? '',
+        placeholder: ({ node }) => {
+          const el = node.attrs.el as El;
+          const sl = scriptLabels(useStore.getState().settings.lang);
+          if (el === 'sceneHeading') return sl.placeholder;
+          if (el === 'transition') return sl.transitions[0];
+          return t(SCREENPLAY_PLACEHOLDER[el] ?? '');
+        },
         showOnlyCurrent: true,
       }),
       Focus.configure({ className: 'has-focus', mode: 'shallowest' }),
@@ -149,7 +162,7 @@ function EditorInner() {
     ],
     content: initial,
     autofocus: 'start',
-    editorProps: { attributes: { lang: settings.lang === 'en' ? 'en' : 'tr', spellcheck: 'false', 'aria-label': 'Senaryo' } },
+    editorProps: { attributes: { lang: settings.lang, spellcheck: 'false', 'aria-label': t('Senaryo') } },
     onUpdate: ({ editor: ed }) => {
       pending.current = ed;
       clearTimeout(timer.current);
@@ -208,19 +221,30 @@ function EditorInner() {
   // Yazım denetimi: aç/kapat ve karakter adlarını bilinen kelimelere ekle
   useEffect(() => spell.poke(), [spellOn]);
   useEffect(() => {
+    if (spell.supports(settings.lang)) spell.setLang(settings.lang);
+  }, [settings.lang]);
+  useEffect(() => {
     if (model) spell.setNames(model.characters.map((c) => c.name));
   }, [model]);
 
   const onContextMenu = (e: React.MouseEvent) => {
-    if (!editor || !(e.target as HTMLElement).closest('.spell-err')) return;
+    const target = e.target as HTMLElement;
+    if (!editor || !target.closest('.spell-err, .tdk-sug')) return;
     const at = editor.view.posAtCoords({ left: e.clientX, top: e.clientY });
+    const box = sheetRef.current!.getBoundingClientRect();
+    const pos = { x: (e.clientX - box.left) / zoom, y: (e.clientY - box.top) / zoom + 8 };
+    const tdk = at ? tdkAt(editor.state, at.pos) : null;
+    if (tdk && !target.closest('.spell-err')) {
+      e.preventDefault();
+      setTagMenu(null);
+      setSpellMenu({ ...pos, hit: { from: tdk.from, to: tdk.to, word: tdk.word }, options: [], tdk: tdk.suggestion });
+      return;
+    }
     const hit = at ? errorAt(editor.state, at.pos) : null;
     if (!hit) return;
     e.preventDefault();
-    const box = sheetRef.current!.getBoundingClientRect();
-    const pos = { x: (e.clientX - box.left) / zoom, y: (e.clientY - box.top) / zoom + 8 };
     setTagMenu(null);
-    setSpellMenu({ ...pos, hit, options: null });
+    setSpellMenu({ ...pos, hit, options: null, tdk: tdk?.suggestion });
     spell.suggest(hit.word).then((options) => setSpellMenu((m) => (m && m.hit.from === hit.from ? { ...m, options } : m)));
   };
 
@@ -242,7 +266,7 @@ function EditorInner() {
     const open = () => {
       if (!editor) return;
       if (editor.state.selection.empty) {
-        useStore.getState().notify('Etiketlemek için önce bir kelime ya da ifade seç');
+        useStore.getState().notify(t('Etiketlemek için önce bir kelime ya da ifade seç'));
         return;
       }
       const c = editor.view.coordsAtPos(editor.state.selection.to);
@@ -267,9 +291,9 @@ function EditorInner() {
       {showStamp ? (
         <div className="stamp" key={stamp}>
           <span>
-            Saklandı
-            <b>{new Date(stamp).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}</b>
-            {model?.pages ?? 0} sayfa
+            {t('Saklandı')}
+            <b>{new Date(stamp).toLocaleDateString(locale(), { day: 'numeric', month: 'long' })}</b>
+            {t('{n} sayfa', { n: model?.pages ?? 0 })}
           </span>
         </div>
       ) : null}
@@ -277,7 +301,7 @@ function EditorInner() {
         <input
           className="scene-title"
           value={title.title}
-          placeholder="Senaryonun adı"
+          placeholder={t('Senaryonun adı')}
           onChange={(e) => useStore.getState().updateTitle({ title: e.target.value })}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === 'ArrowDown') {
@@ -285,35 +309,47 @@ function EditorInner() {
               editor?.commands.focus('start');
             }
           }}
-          aria-label="Senaryo adı"
+          aria-label={t('Senaryo adı')}
         />
         <div className="scene-meta">
-          <span className="label num">{scenes} sahne</span>
+          <span className="label num">{t('{n} sahne', { n: scenes })}</span>
           <span className="sep" />
-          <span className="label num">{model?.pages ?? 1} sayfa</span>
+          <span className="label num">{t('{n} sayfa', { n: model?.pages ?? 1 })}</span>
           <span className="sep" />
-          <span className="label num">≈ {Math.max(1, Math.round(totalEighths / 8))} dk</span>
+          <span className="label num">≈ {t('{n} dk', { n: Math.max(1, Math.round(totalEighths / 8)) })}</span>
           {settings.revisionOn ? (
             <>
               <span className="sep" />
               <span className="label rev-label" style={{ color: `var(--rev-${settings.revisionGen})` }}>
-                Revizyon modu · {settings.revisionGen}. kuşak
+                {t('Revizyon modu · {n}. tur', { n: settings.revisionGen })}
               </span>
             </>
           ) : null}
         </div>
       </div>
       {flag ? (
-        <div className="el-flag" style={{ top: flag.top }}>
+        <div className={`el-flag ${flag.num ? 'over-num' : ''}`} style={{ top: flag.top }}>
           {EL_LABEL[flag.el]}
         </div>
       ) : null}
       <EditorContent editor={editor} />
       {spellMenu && editor ? (
-        <div className="tag-menu spell-menu" style={{ left: spellMenu.x, top: spellMenu.y }} role="menu" aria-label="Yazım önerileri">
+        <div className="tag-menu spell-menu" style={{ left: spellMenu.x, top: spellMenu.y }} role="menu" aria-label={t('Yazım önerileri')}>
           <div className="label">“{spellMenu.hit.word}”</div>
-          {spellMenu.options === null ? (
-            <div className="muted spell-wait">Öneriler aranıyor…</div>
+          {spellMenu.tdk ? (
+            <button
+              role="menuitem"
+              className="spell-option tdk-option"
+              onClick={() => {
+                replaceWord(editor, spellMenu.hit, spellMenu.tdk!);
+                setSpellMenu(null);
+              }}
+            >
+              {spellMenu.tdk} <small>{t('TDK yazımı')}</small>
+            </button>
+          ) : null}
+          {spellMenu.tdk && spellMenu.options?.length === 0 ? null : spellMenu.options === null ? (
+            <div className="muted spell-wait">{t('Öneriler aranıyor…')}</div>
           ) : spellMenu.options.length ? (
             spellMenu.options.map((o) => (
               <button
@@ -329,7 +365,7 @@ function EditorInner() {
               </button>
             ))
           ) : (
-            <div className="muted spell-wait">Öneri yok</div>
+            <div className="muted spell-wait">{t('Öneri yok')}</div>
           )}
           <hr />
           <button
@@ -340,7 +376,7 @@ function EditorInner() {
               editor.commands.focus();
             }}
           >
-            Sözlüğe ekle
+            {t('Sözlüğe ekle')}
           </button>
           <button
             role="menuitem"
@@ -350,13 +386,13 @@ function EditorInner() {
               editor.commands.focus();
             }}
           >
-            Bu oturumda yoksay
+            {t('Bu oturumda yoksay')}
           </button>
         </div>
       ) : null}
       {tagMenu && editor ? (
         <div className="tag-menu" style={{ left: tagMenu.x, top: tagMenu.y }} role="menu">
-          <div className="label">Etiketle</div>
+          <div className="label">{t('Etiketle')}</div>
           {TAG_CATS.map((c) => (
             <button
               key={c.id}
@@ -367,7 +403,7 @@ function EditorInner() {
               }}
             >
               <i style={{ background: `var(${c.color})` }} />
-              {c.name}
+              {t(c.name)}
             </button>
           ))}
           <button
@@ -378,7 +414,7 @@ function EditorInner() {
               setTagMenu(null);
             }}
           >
-            Etiketi kaldır
+            {t('Etiketi kaldır')}
           </button>
         </div>
       ) : null}
@@ -426,7 +462,7 @@ export function FindBar() {
       <input
         ref={inputRef}
         value={q}
-        placeholder="Bul"
+        placeholder={t('Bul')}
         onChange={(e) => setQ(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && ed) {
@@ -439,19 +475,19 @@ export function FindBar() {
       <span className="num muted count">
         {st?.matches.length ? `${st.current + 1}/${st.matches.length}` : q ? '0' : ''}
       </span>
-      <button className="icon-btn small" title="Önceki (Shift+Enter)" onClick={() => ed && (gotoMatch(ed, -1), force((x) => x + 1))}>
+      <button className="icon-btn small" title={t('Önceki (Shift+Enter)')} onClick={() => ed && (gotoMatch(ed, -1), force((x) => x + 1))}>
         ↑
       </button>
-      <button className="icon-btn small" title="Sonraki (Enter)" onClick={() => ed && (gotoMatch(ed, 1), force((x) => x + 1))}>
+      <button className="icon-btn small" title={t('Sonraki (Enter)')} onClick={() => ed && (gotoMatch(ed, 1), force((x) => x + 1))}>
         ↓
       </button>
-      <button className={`icon-btn small ${matchCase ? 'on' : ''}`} title="Büyük/küçük harfe duyarlı" onClick={() => setMatchCase(!matchCase)}>
+      <button className={`icon-btn small ${matchCase ? 'on' : ''}`} title={t('Büyük/küçük harfe duyarlı')} onClick={() => setMatchCase(!matchCase)}>
         Aa
       </button>
       <span className="divider" />
       <input
         value={r}
-        placeholder="Değiştir"
+        placeholder={t('Değiştir')}
         onChange={(e) => setR(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && ed) {
@@ -462,12 +498,12 @@ export function FindBar() {
         }}
       />
       <button className="text-btn" onClick={() => ed && (replaceCurrent(ed, r), force((x) => x + 1))}>
-        Değiştir
+        {t('Değiştir')}
       </button>
       <button className="text-btn" onClick={() => ed && (replaceAll(ed, r), force((x) => x + 1))}>
-        Tümü
+        {t('Tümü')}
       </button>
-      <button className="icon-btn small" title="Kapat (Esc)" onClick={close}>
+      <button className="icon-btn small" title={t('Kapat (Esc)')} onClick={close}>
         ×
       </button>
     </div>

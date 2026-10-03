@@ -3,6 +3,7 @@
  * Masaüstünde Tauri komutları; tarayıcıda (geliştirme ve testler) localStorage içinde sanal dosyalar.
  */
 import { isTauri } from './repository';
+import { t } from '../i18n';
 
 export const SCRIPT_EXTENSIONS = ['fountain'];
 const VFS = 'wtf.vfs.v1';
@@ -29,7 +30,7 @@ export async function readText(path: string): Promise<{ text: string; mtime: num
     return invoke('read_text', { path });
   }
   const f = vfs()[path];
-  if (!f) throw new Error('Dosya bulunamadı.');
+  if (!f) throw new Error(t('Dosya bulunamadı.'));
   return f;
 }
 
@@ -66,7 +67,7 @@ export async function fileExists(path: string): Promise<boolean> {
 export async function pickOpenPath(): Promise<string | null> {
   if (isTauri()) {
     const { open } = await import('@tauri-apps/plugin-dialog');
-    const p = await open({ multiple: false, filters: [{ name: 'Fountain senaryosu', extensions: SCRIPT_EXTENSIONS }] });
+    const p = await open({ multiple: false, filters: [{ name: t('Fountain senaryosu'), extensions: SCRIPT_EXTENSIONS }] });
     return typeof p === 'string' ? p : null;
   }
   // tarayıcı: gerçek dosyayı sanal dosya sistemine al
@@ -92,11 +93,11 @@ export async function pickSavePath(defaultName: string): Promise<string | null> 
   const name = defaultName.toLowerCase().endsWith('.fountain') ? defaultName : `${defaultName}.fountain`;
   if (isTauri()) {
     const { save } = await import('@tauri-apps/plugin-dialog');
-    const p = await save({ defaultPath: name, filters: [{ name: 'Fountain senaryosu', extensions: SCRIPT_EXTENSIONS }] });
+    const p = await save({ defaultPath: name, filters: [{ name: t('Fountain senaryosu'), extensions: SCRIPT_EXTENSIONS }] });
     if (!p) return null;
     return /\.fountain$/i.test(p) ? p : `${p}.fountain`;
   }
-  const p = window.prompt('Kaydedilecek dosya adı', name);
+  const p = window.prompt(t('Kaydedilecek dosya adı'), name);
   if (!p) return null;
   const clean = p.replace(/[\\/]/g, '');
   return `C:\\Senaryolar\\${/\.fountain$/i.test(clean) ? clean : `${clean}.fountain`}`;
@@ -169,6 +170,13 @@ export async function closeWindow() {
     const { getCurrentWindow } = await import('@tauri-apps/api/window');
     await getCurrentWindow().close();
   } else window.close();
+}
+
+/** Yerel menü çubuğunu arayüz dilinde yeniden kur (kimlik → etiket) */
+export async function setMenuLabels(labels: Record<string, string>) {
+  if (!isTauri()) return;
+  const { invoke } = await import('@tauri-apps/api/core');
+  await invoke('set_menu_labels', { labels });
 }
 
 /** Yerel menü olaylarını dinle */

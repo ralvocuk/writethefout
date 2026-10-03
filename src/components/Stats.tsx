@@ -1,7 +1,8 @@
 import { useStore } from '../store/useStore';
-import { TAG_CATS, formatEighths, formatNumber } from '../script/elements';
+import { TAG_CATS, formatEighths } from '../script/elements';
 import { Stat } from './Characters';
 import { safeName, saveFile } from '../export/platform';
+import { t } from '../i18n';
 
 function Bars({ items }: { items: { label: string; value: number; note?: string }[] }) {
   const max = Math.max(1, ...items.map((i) => i.value));
@@ -64,10 +65,10 @@ export function Stats() {
   }).filter((b) => b.items.length);
 
   const exportCsv = async () => {
-    const rows = [['Kategori', 'Öğe', 'Sahneler']];
-    for (const b of breakdown) for (const it of b.items) rows.push([b.cat.name, it.text, it.scenes.join(' ')]);
+    const rows = [[t('Kategori'), t('Öğe'), t('Sahneler')]];
+    for (const b of breakdown) for (const it of b.items) rows.push([t(b.cat.name), it.text, it.scenes.join(' ')]);
     // sahne başına döküm
-    rows.push([], ['Sahne', 'Başlık', 'Sayfa', 'Uzunluk', 'Karakterler', ...TAG_CATS.map((c) => c.name)]);
+    rows.push([], [t('Sahne'), t('Başlık'), t('Sayfa'), t('Uzunluk'), t('Karakterler'), ...TAG_CATS.map((c) => t(c.name))]);
     for (const s of sc)
       rows.push([
         s.number,
@@ -78,7 +79,7 @@ export function Stats() {
         ...TAG_CATS.map((c) => s.tags.filter((t) => t.cat === c.id).map((t) => t.text).join(', ')),
       ]);
     const csv = '﻿' + rows.map((r) => r.map((v) => `"${(v ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
-    await saveFile(`${safeName(docTitle || 'senaryo')} - döküm.csv`, csv, { name: 'CSV', extensions: ['csv'] });
+    await saveFile(`${safeName(docTitle || t('senaryo'))} - ${t('döküm')}.csv`, csv, { name: 'CSV', extensions: ['csv'] });
   };
 
   return (
@@ -89,48 +90,47 @@ export function Stats() {
         <Stat n={sc.length} label="sahne" />
         <Stat n={formatEighths(avg)} label="ortalama sahne (sayfa)" />
         <Stat n={model.characters.length} label="konuşan karakter" />
-        <Stat n={`%${dialoguePct}`} label="diyalog / aksiyon" />
+        <Stat n={t('%{n}', { n: dialoguePct })} label="diyalog / aksiyon" />
       </div>
       {longest ? (
         <p className="hint">
-          En uzun sahne:{' '}
+          {t('En uzun sahne:')}{' '}
           <button className="link" onClick={() => openScript(longest.sid)}>
             {longest.number}. {longest.heading}
           </button>{' '}
-          ({formatEighths(longest.eighths)} sayfa)
+          ({t('{len} sayfa', { len: formatEighths(longest.eighths) })})
         </p>
       ) : null}
 
       <div className="stats-grid">
         <section>
-          <h3 className="label">İç / dış</h3>
-          <Bars items={ie.map(([k, v]) => ({ label: k, value: v.e, note: `${v.n} sahne` }))} />
+          <h3 className="label">{t('İç / dış')}</h3>
+          <Bars items={ie.map(([k, v]) => ({ label: t(k), value: v.e, note: t('{n} sahne', { n: v.n }) }))} />
         </section>
         <section>
-          <h3 className="label">Günün saati</h3>
-          <Bars items={times.map(([k, v]) => ({ label: k, value: v.e, note: `${v.n} sahne` }))} />
+          <h3 className="label">{t('Günün saati')}</h3>
+          <Bars items={times.map(([k, v]) => ({ label: k, value: v.e, note: t('{n} sahne', { n: v.n }) }))} />
         </section>
         <section>
-          <h3 className="label">Mekanlar (sayfa)</h3>
+          <h3 className="label">{t('Mekânlar (sayfa)')}</h3>
           <Bars items={locs.map(([k, v]) => ({ label: k, value: v.e, note: formatEighths(v.e) }))} />
         </section>
         <section>
-          <h3 className="label">Replikler</h3>
-          <Bars items={model.characters.slice(0, 12).map((c) => ({ label: c.name, value: c.lines, note: `${c.lines} · ${formatNumber(c.words)} k.` }))} />
+          <h3 className="label">{t('Replikler')}</h3>
+          <Bars items={model.characters.slice(0, 12).map((c) => ({ label: c.name, value: c.lines, note: `${c.lines} · ${t('{n} k.', { n: c.words })}` }))} />
         </section>
       </div>
 
       <section className="breakdown">
         <div className="breakdown-head">
-          <h3 className="label">Prodüksiyon dökümü</h3>
+          <h3 className="label">{t('Prodüksiyon dökümü')}</h3>
           <button className="btn" onClick={exportCsv}>
-            CSV olarak kaydet
+            {t('CSV olarak kaydet')}
           </button>
         </div>
         {breakdown.length === 0 ? (
           <p className="hint">
-            Senaryoda bir kelimeyi seçip <span className="kbd">Ctrl</span>
-            <span className="kbd">T</span> ile etiketle (aksesuar, kostüm, araç…). Burada sahne numaralarıyla listelenir.
+            {t('Senaryoda bir kelimeyi seçip Ctrl+T ile etiketle (aksesuar, kostüm, araç…). Burada sahne numaralarıyla listelenir.')}
           </p>
         ) : (
           <div className="breakdown-grid">
@@ -138,7 +138,7 @@ export function Stats() {
               <div key={b.cat.id} className="bd-cat">
                 <div className="bd-title">
                   <i style={{ background: `var(${b.cat.color})` }} />
-                  {b.cat.name}
+                  {t(b.cat.name)}
                 </div>
                 {b.items.map((it) => (
                   <div key={it.text} className="bd-item">

@@ -9,9 +9,9 @@
  * Desteklenenler: notlar [[ ]], kapalı metin /* *\/, çift diyalog ^, ortalı > <, şarkı ~, bölüm #,
  * özet =, sahne numarası #12#, sayfa sonu ===, vurgu * ** *** _, element içi boş satır (iki boşluk).
  */
-import type { El } from '../script/elements';
+import { HEADING_PREFIX, type El } from '../script/elements';
 import { line, lineText, normalizeDoc, textNodes, type JDoc, type JLine, type JMark, type JText } from '../script/json';
-import { upper, type Lang } from './layout';
+import { scriptLabels, upper, type Lang } from './layout';
 
 export interface TitleInfo {
   title: string;
@@ -32,7 +32,7 @@ export interface FountainOptions {
 }
 
 const EN_HEADING = /^(INT|EXT|EST|INT\.?\/EXT|I\/E)[.\s]/i;
-const ANY_HEADING = /^(İÇ\/DIŞ|DIŞ\/İÇ|İÇ|DIŞ|INT\.?\/EXT|EXT\.?\/INT|INT|EXT|EST|I\/E)[.\s]/iu;
+const ANY_HEADING = new RegExp(`^(${HEADING_PREFIX})[.\\s]`, 'iu');
 const CAPS: El[] = ['sceneHeading', 'character', 'transition'];
 const ASCII_CAPS = /^[A-Z][A-Z0-9 .'\-]*$/;
 const isAllCaps = (s: string) => /\p{L}/u.test(s) && (s === s.toLocaleUpperCase('tr-TR') || s === s.toUpperCase());
@@ -73,7 +73,7 @@ export function toFountain(doc: JDoc, title: TitleInfo | null, lang: Lang, opts:
   if (title && (title.title || title.author)) {
     const multi = (k: string, v: string) => (v.includes('\n') ? `${k}:\n${v.split('\n').map((l) => `    ${l}`).join('\n')}` : `${k}: ${v}`);
     if (title.title) out.push(multi('Title', title.title));
-    out.push(`Credit: ${title.credit || (lang === 'tr' ? 'Yazan' : 'Written by')}`);
+    out.push(`Credit: ${title.credit || scriptLabels(lang).written}`);
     if (title.author) out.push(multi('Author', title.author));
     if (title.source) out.push(multi('Source', title.source));
     if (title.draftDate) out.push(`Draft date: ${title.draftDate}`);

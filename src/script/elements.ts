@@ -1,4 +1,5 @@
 /** Senaryo elemanları ve ortak tanımlar. Editör, sayfalama, dışa/içe aktarma bu dosyayı paylaşır. */
+import { locale, translated } from '../i18n';
 
 export type El =
   | 'sceneHeading'
@@ -17,7 +18,8 @@ export const CORE: El[] = ['sceneHeading', 'action', 'character', 'parenthetical
 /** Ek elemanlar (Ctrl+7…0) */
 export const EXTRA: El[] = ['centered', 'lyrics', 'section', 'pageBreak'];
 
-export const EL_LABEL: Record<El, string> = {
+/** Arayüz adları (okunurken seçili arayüz diline çevrilir) */
+export const EL_LABEL: Record<El, string> = translated({
   sceneHeading: 'Sahne başlığı',
   action: 'Aksiyon',
   character: 'Karakter',
@@ -28,12 +30,12 @@ export const EL_LABEL: Record<El, string> = {
   lyrics: 'Şarkı sözü',
   section: 'Bölüm',
   pageBreak: 'Sayfa sonu',
-};
+});
 
 /** Basılmayan elemanlar */
 export const NON_PRINTING: El[] = ['section'];
 
-/** Hollywood revizyon renkleri (kuşak sırasıyla) */
+/** Hollywood revizyon renkleri (tur sırasıyla). Ad arayüz için t() ile, PDF'teki ad senaryo diline göre layout.ts'den gelir */
 export const REVISIONS = [
   { name: 'Mavi', en: 'Blue', color: '#3d6fb6' },
   { name: 'Pembe', en: 'Pink', color: '#d0648f' },
@@ -72,7 +74,18 @@ export const SCENE_COLORS = [
 export const colorVar = (id: string | null | undefined) =>
   SCENE_COLORS.find((c) => c.id === id)?.v ?? null;
 
-export const upperTr = (s: string) => s.toLocaleUpperCase('tr-TR');
+/**
+ * Senaryo metninde büyük harf (karakter adları, sahne başlıkları). Senaryo diline göre:
+ * Türkçede i → İ, diğer dillerde i → I. Belge açılınca ve dil değişince setCaseLang çağrılır.
+ */
+let CASE_LOCALE = 'tr-TR';
+export function setCaseLang(lang: string) {
+  CASE_LOCALE = lang === 'tr' ? 'tr-TR' : lang;
+}
+export const upperTr = (s: string) => s.toLocaleUpperCase(CASE_LOCALE);
+
+/** Sahne başlığı önekleri (Türkçe, İngilizce, Almanca; İspanyolca ve Fransızca INT./EXT. kullanır) */
+export const HEADING_PREFIX = 'İÇ\\/DIŞ|DIŞ\\/İÇ|İÇ|DIŞ|INT\\.?\\/EXT|EXT\\.?\\/INT|INT|EXT|I\\/E|EST|INNEN\\/AUSSEN|AUSSEN\\/INNEN|INNEN|AUSSEN|AUẞEN';
 
 /** "ELİF (D.S.)" → "ELİF" ; "ELİF ^" → "ELİF" */
 export const baseName = (s: string) =>
@@ -83,7 +96,7 @@ export const countWords = (text: string): number => {
   return m ? m.length : 0;
 };
 
-export const formatNumber = (n: number) => n.toLocaleString('tr-TR');
+export const formatNumber = (n: number) => n.toLocaleString(locale());
 
 /** 1/8 sayfa birimini "2⅜" gibi yazar */
 export function formatEighths(eighths: number): string {

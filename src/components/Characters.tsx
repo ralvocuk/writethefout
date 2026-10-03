@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { colorVar, formatNumber } from '../script/elements';
+import { t } from '../i18n';
 import { ColorPicker } from './Inspector';
 
 /** Karakterler: replik sayıları, sahneleri ve profil notları. */
@@ -20,7 +21,7 @@ export function Characters() {
   if (!chars.length) {
     return (
       <div className="view-pad">
-        <p className="hint">Henüz konuşan karakter yok. Senaryoda bir karakter adı yazıp diyalog ekle.</p>
+        <p className="hint">{t('Henüz konuşan karakter yok. Senaryoda bir karakter adı yazıp diyalog ekle.')}</p>
       </div>
     );
   }
@@ -56,21 +57,21 @@ export function Characters() {
         </div>
         <div className="insp-block flat">
           <label className="field">
-            <span className="muted">Renk</span>
+            <span className="muted">{t('Renk')}</span>
             <ColorPicker value={p.color} onChange={(col) => update(c.name, { color: col })} />
           </label>
           <div className="label" style={{ marginTop: 14 }}>
-            Profil
+            {t('Profil')}
           </div>
           <textarea
             className="synopsis"
             value={p.description}
-            placeholder="Kim? Ne istiyor, neye ihtiyacı var? Nasıl konuşur?"
+            placeholder={t('Kim? Ne istiyor, neye ihtiyacı var? Nasıl konuşur?')}
             onChange={(e) => update(c.name, { description: e.target.value })}
           />
         </div>
         <div className="label" style={{ margin: '18px 0 8px' }}>
-          Geçtiği sahneler
+          {t('Geçtiği sahneler')}
           <button
             className="text-btn"
             style={{ marginLeft: 12 }}
@@ -79,7 +80,7 @@ export function Characters() {
               setTab('board');
             }}
           >
-            Panoda göster
+            {t('Panoda göster')}
           </button>
         </div>
         <ol className="scene-list">
@@ -104,7 +105,7 @@ export function Stat({ n, label }: { n: number | string; label: string }) {
   return (
     <div className="stat">
       <b className="num">{typeof n === 'number' ? formatNumber(n) : n}</b>
-      <span>{label}</span>
+      <span>{t(label)}</span>
     </div>
   );
 }

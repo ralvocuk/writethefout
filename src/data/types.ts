@@ -1,4 +1,5 @@
 import type { Lang, Paper } from '../export/layout';
+import { translated } from '../i18n';
 
 export type Status = 'draft' | 'revised' | 'done';
 
@@ -61,10 +62,10 @@ export interface ProjectData {
   characters: Record<string, CharacterProfile>;
 }
 
-export const STATUS_LABEL: Record<Status, string> = {
+export const STATUS_LABEL: Record<Status, string> = translated({
   draft: 'Taslak',
   revised: 'Revize',
   done: 'Bitti',
-};
+});
 
 export const emptySceneMeta = (sid: string): SceneMeta => ({ sid, synopsis: '', color: null, status: 'draft', storyDay: '' });

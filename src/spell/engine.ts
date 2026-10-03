@@ -1,14 +1,33 @@
 /**
- * Türkçe yazım denetimi çekirdeği (nspell + Hunspell tr sözlüğü üstüne).
- * Saf fonksiyonlar: hem web worker'da hem testlerde kullanılır.
+ * Yazım denetimi çekirdeği (nspell + Hunspell sözlükleri: Türkçe, İngilizce, İspanyolca).
+ * Saf fonksiyonlar: hem web worker'da hem testlerde kullanılır. Dil `setSpellLang` ile seçilir.
  */
 export interface Speller {
   correct(word: string): boolean;
   suggest(word: string): string[];
 }
 
-const lowerTr = (s: string) => s.toLocaleLowerCase('tr-TR');
-const upperTr = (s: string) => s.toLocaleUpperCase('tr-TR');
+export type SpellLang = 'tr' | 'en' | 'es';
+export const SPELL_LANGS: SpellLang[] = ['tr', 'en', 'es'];
+
+const LOCALES: Record<SpellLang, string> = { tr: 'tr-TR', en: 'en-US', es: 'es-ES' };
+/** klavyede eksik kalan harfler: "cok" → "çok", "cancion" → "canción" */
+const SWAP_SETS: Record<SpellLang, Record<string, string>> = {
+  tr: { c: 'ç', ç: 'c', g: 'ğ', ğ: 'g', i: 'ı', ı: 'i', o: 'ö', ö: 'o', s: 'ş', ş: 's', u: 'ü', ü: 'u' },
+  en: {},
+  es: { a: 'á', á: 'a', e: 'é', é: 'e', i: 'í', í: 'i', o: 'ó', ó: 'o', u: 'ú', ú: 'u', n: 'ñ', ñ: 'n' },
+};
+let LOC = LOCALES.tr;
+let SWAPS = SWAP_SETS.tr;
+let LANG: SpellLang = 'tr';
+export function setSpellLang(lang: SpellLang) {
+  LANG = lang;
+  LOC = LOCALES[lang];
+  SWAPS = SWAP_SETS[lang];
+}
+
+const lowerTr = (s: string) => s.toLocaleLowerCase(LOC);
+const upperTr = (s: string) => s.toLocaleUpperCase(LOC);
 const capTr = (s: string) => (s ? upperTr(s[0]) + s.slice(1) : s);
 
 const isCaps = (w: string) => w.length > 1 && w === upperTr(w) && w !== lowerTr(w);
@@ -21,7 +40,7 @@ export const normalizeWord = (w: string) => w.replace(/[’‘`]/g, "'");
 function known(sp: Speller, w: string): boolean {
   if (sp.correct(w)) return true;
   // şapkalı yazımlar (rüzgâr, kâğıt): sözlükte çoğu şapkasız
-  if (/[âîûÂÎÛ]/.test(w)) {
+  if (LANG === 'tr' && /[âîûÂÎÛ]/.test(w)) {
     const plain = w.replace(/[âÂ]/g, (c) => (c === 'â' ? 'a' : 'A')).replace(/[îÎ]/g, (c) => (c === 'î' ? 'i' : 'İ')).replace(/[ûÛ]/g, (c) => (c === 'û' ? 'u' : 'U'));
     if (known(sp, plain)) return true;
   }
@@ -41,14 +60,14 @@ export function checkWord(sp: Speller, raw: string): boolean {
   if (ap > 0) {
     const base = w.slice(0, ap);
     if (base.length < 2 || known(sp, base)) return true;
-    // büyük harfle başlayan bilinmeyen özel adlar: eki dert etme, kökü kullanıcı ekleyebilir
+    // Türkçede kesme yalnız özel addan sonra gelir: büyük harfli kök + kesme = özel ad (Danny'nin, DANNY'NİN);
+    // İngilizcede de iyelik ('s) özel adlarda sık
+    if (isCap(base)) return true;
   }
   // tire ile birleşik yazımlar: her parçası doğruysa doğru
   if (w.includes('-')) return w.split('-').every((p) => !p || checkWord(sp, p));
   return false;
 }
-
-const SWAPS: Record<string, string> = { c: 'ç', ç: 'c', g: 'ğ', ğ: 'g', i: 'ı', ı: 'i', o: 'ö', ö: 'o', s: 'ş', ş: 's', u: 'ü', ü: 'u' };
 
 /** Türkçe klavyesiz yazımlar: "cok" → "çok", "degil" → "değil" */
 function diacriticVariants(sp: Speller, lo: string): string[] {
@@ -82,7 +101,7 @@ export function suggestWord(sp: Speller, raw: string, limit = 7): string[] {
   };
   for (const v of diacriticVariants(sp, lo)) add(v);
   for (const s of sp.suggest(lo)) {
-    // nspell bazen Türkçe olmayan büyük harf biçimleri döndürür (GIDIYORUM): ele
+    // nspell bazen dile uymayan büyük harf biçimleri döndürür (GIDIYORUM): ele
     if (s.length > 1 && s === s.toUpperCase() && s !== s.toLowerCase()) continue;
     add(s);
   }

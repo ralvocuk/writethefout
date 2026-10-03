@@ -17,6 +17,8 @@ import {
   type ScriptDocument,
 } from '../script/document';
 import type { TitleInfo } from '../export/fountain';
+import { locale, t, uiLang } from '../i18n';
+import { setCaseLang } from '../script/elements';
 import { newSid } from '../editor/screenplay';
 
 export type Tab = 'write' | 'board' | 'outline' | 'characters' | 'timeline' | 'stats' | 'preview';
@@ -93,6 +95,8 @@ interface State {
   dailyGoal: number;
   sprint: ActiveSprint | null;
   spellOn: boolean;
+  /** TDK yazım önerileri (Türkçe senaryolarda) */
+  tdkOn: boolean;
   snapshots: Snapshot[];
   recent: RecentFile[];
   recovery: { key: string; path: string | null; content: string; at: number; slot: string }[];
@@ -143,7 +147,7 @@ interface State {
   setTheme(t: Theme): void;
   setZoom(z: number): void;
   setAutosave(v: boolean): void;
-  toggle(key: 'focus' | 'inspector' | 'findOpen' | 'spellOn', v?: boolean): void;
+  toggle(key: 'focus' | 'inspector' | 'findOpen' | 'spellOn' | 'tdkOn', v?: boolean): void;
   setDailyGoal(n: number): void;
   startSprint(minutes: number, target: number | null): void;
   stopSprint(completed: boolean): Promise<void>;
@@ -224,7 +228,7 @@ export const useStore = create<State>((set, get) => {
     if (!st.doc.path || !st.doc.dirty || st.saving) return;
     const disk = await fileMtime(st.doc.path).catch(() => null);
     if (st.doc.mtime && disk && disk !== st.doc.mtime) {
-      st.notify('Dosya başka bir programda değişti; otomatik kayıt durduruldu. Kaydet ile karar verebilirsin.', 'error');
+      st.notify(t('Dosya başka bir programda değişti; otomatik kayıt durduruldu. Kaydet ile karar verebilirsin.'), 'error');
       return;
     }
     await writeOut(st.doc.path);
@@ -251,6 +255,7 @@ export const useStore = create<State>((set, get) => {
 
   /** Ayrıştırılmış bir belgeyi pencereye yükle */
   const load = (d: ScriptDocument, doc: DocState) => {
+    setCaseLang(d.settings.lang);
     const script = JSON.stringify(d.doc);
     const model = buildModel(script, d.settings.paper);
     set({
@@ -310,6 +315,7 @@ export const useStore = create<State>((set, get) => {
     dailyGoal: pref<number>('wtf.goal', 1000),
     sprint: null,
     spellOn: pref<boolean>('wtf.spell', true),
+    tdkOn: pref<boolean>('wtf.tdk', true),
     snapshots: [],
     recent: [],
     recovery: [],
@@ -347,11 +353,12 @@ export const useStore = create<State>((set, get) => {
     },
 
     async newDocument(sample = false) {
-      if (get().status === 'ready' && !(await get().guardUnsaved('yeni bir senaryo açmadan'))) return false;
+      if (get().status === 'ready' && !(await get().guardUnsaved(t('Yeni bir senaryo açmadan önce kaydedilsin mi?')))) return false;
       const s = sample ? sampleProject() : null;
       const d: ScriptDocument = {
         title: { ...emptyTitle(), title: s?.title ?? '' },
-        settings: { ...DEFAULT_SETTINGS },
+        // yeni senaryo arayüz dilinde başlar (örnek senaryo Türkçe)
+        settings: { ...DEFAULT_SETTINGS, lang: sample ? 'tr' : uiLang() },
         doc: JSON.parse(s?.script.doc ?? emptyScript(newSid())),
         scenes: Object.fromEntries((s?.scenes ?? []).map((x) => [x.sid, x])),
         characters: Object.fromEntries((s?.characters ?? []).map((c) => [c.name, c])),
@@ -364,9 +371,9 @@ export const useStore = create<State>((set, get) => {
 
     async openPath(path) {
       if (get().status === 'ready' && get().doc.path === path) return true;
-      if (get().status === 'ready' && !(await get().guardUnsaved('başka bir senaryo açmadan'))) return false;
+      if (get().status === 'ready' && !(await get().guardUnsaved(t('Başka bir senaryo açmadan önce kaydedilsin mi?')))) return false;
       try {
-        if (!(await fileExists(path))) throw new Error('Dosya bulunamadı; taşınmış ya da silinmiş olabilir.');
+        if (!(await fileExists(path))) throw new Error(t('Dosya bulunamadı; taşınmış ya da silinmiş olabilir.'));
         const { text, mtime } = await readText(path);
         const d = parseDocument(text, newSid);
         load(d, { key: path, path, mtime, dirty: false });
@@ -394,37 +401,37 @@ export const useStore = create<State>((set, get) => {
       const disk = await fileMtime(st.doc.path).catch(() => null);
       if (st.doc.mtime && disk && disk !== st.doc.mtime) {
         const choice = await get().ask(
-          'Dosya dışarıda değişti',
-          `${baseName(st.doc.path)} sen açtıktan sonra başka bir program tarafından değiştirilmiş. Ne yapılsın?`,
+          t('Dosya dışarıda değişti'),
+          t('{name} sen açtıktan sonra başka bir program tarafından değiştirilmiş. Ne yapılsın?', { name: baseName(st.doc.path) }),
           [
-            { id: 'cancel', label: 'Vazgeç' },
-            { id: 'reload', label: 'Diskteki sürümü aç' },
-            { id: 'overwrite', label: 'Benimkiyle üzerine yaz', primary: true, danger: true },
+            { id: 'cancel', label: t('Vazgeç') },
+            { id: 'reload', label: t('Diskteki sürümü aç') },
+            { id: 'overwrite', label: t('Benimkiyle üzerine yaz'), primary: true, danger: true },
           ],
         );
         if (choice === 'cancel') return false;
         if (choice === 'reload') {
-          await get().takeSnapshot('Diskten yeniden yüklemeden önce');
+          await get().takeSnapshot(t('Diskten yeniden yüklemeden önce'));
           const { text, mtime } = await readText(st.doc.path);
           load(parseDocument(text, newSid), { key: st.doc.path, path: st.doc.path, mtime, dirty: false });
           clearRecovery();
-          get().notify('Diskteki sürüm açıldı; seninki Anlık görüntüler’de duruyor');
+          get().notify(t('Diskteki sürüm açıldı; seninki Anlık görüntüler’de duruyor'));
           return false;
         }
       }
       const ok = await writeOut(st.doc.path);
-      if (ok) get().notify('Kaydedildi');
+      if (ok) get().notify(t('Kaydedildi'));
       return ok;
     },
 
     async saveAs() {
       const st = get();
-      const suggested = st.title.title || (st.doc.path ? baseName(st.doc.path) : 'Adsız senaryo');
+      const suggested = st.title.title || (st.doc.path ? baseName(st.doc.path) : t('Adsız senaryo'));
       const path = await pickSavePath(suggested);
       if (!path) return false;
       const ok = await writeOut(path);
       if (ok) {
-        get().notify(`${baseName(path)}.fountain olarak kaydedildi`);
+        get().notify(t('{name} olarak kaydedildi', { name: `${baseName(path)}.fountain` }));
         get().loadSnapshots();
       }
       return ok;
@@ -434,11 +441,11 @@ export const useStore = create<State>((set, get) => {
       editorBridge.flush();
       const st = get();
       if (st.status !== 'ready' || !st.doc.dirty) return true;
-      const name = st.doc.path ? `${baseName(st.doc.path)}.fountain` : st.title.title || 'Adsız senaryo';
-      const choice = await get().ask('Kaydedilmemiş değişiklikler', `“${name}” içindeki değişiklikler kaydedilmedi. ${action[0].toLocaleUpperCase('tr-TR') + action.slice(1)} kaydedilsin mi?`, [
-        { id: 'cancel', label: 'Vazgeç' },
-        { id: 'discard', label: 'Kaydetme', danger: true },
-        { id: 'save', label: 'Kaydet', primary: true },
+      const name = st.doc.path ? `${baseName(st.doc.path)}.fountain` : st.title.title || t('Adsız senaryo');
+      const choice = await get().ask(t('Kaydedilmemiş değişiklikler'), `${t('“{name}” içindeki değişiklikler kaydedilmedi.', { name })} ${action}`, [
+        { id: 'cancel', label: t('Vazgeç') },
+        { id: 'discard', label: t('Kaydetme'), danger: true },
+        { id: 'save', label: t('Kaydet'), primary: true },
       ]);
       if (choice === 'cancel') return false;
       if (choice === 'save') return get().save();
@@ -447,7 +454,7 @@ export const useStore = create<State>((set, get) => {
     },
 
     async loadImported(title, doc, synopses, name) {
-      if (get().status === 'ready' && !(await get().guardUnsaved('içe aktarmadan önce'))) return false;
+      if (get().status === 'ready' && !(await get().guardUnsaved(t('İçe aktarmadan önce kaydedilsin mi?')))) return false;
       const full = finalize(doc, newSid);
       const scenes: Record<string, SceneMeta> = {};
       full.content
@@ -463,7 +470,7 @@ export const useStore = create<State>((set, get) => {
     },
 
     async openContent(text, name) {
-      if (get().status === 'ready' && !(await get().guardUnsaved('başka bir senaryo açmadan'))) return false;
+      if (get().status === 'ready' && !(await get().guardUnsaved(t('Başka bir senaryo açmadan önce kaydedilsin mi?')))) return false;
       const d = parseDocument(text, newSid);
       if (!d.title.title && name) d.title.title = name;
       load(d, { key: `untitled:${uid()}`, path: null, mtime: null, dirty: true });
@@ -476,7 +483,7 @@ export const useStore = create<State>((set, get) => {
       const d = parseDocument(r.content, newSid);
       load(d, { key: r.path ?? `untitled:${uid()}`, path: r.path, mtime: null, dirty: true });
       get().discardRecovery(s);
-      get().notify('Kurtarılan çalışma açıldı — kaydetmeyi unutma');
+      get().notify(t('Kurtarılan çalışma açıldı — kaydetmeyi unutma'));
     },
     discardRecovery(s) {
       try {
@@ -513,7 +520,7 @@ export const useStore = create<State>((set, get) => {
         set({ wordsToday: after, ...(sp ? { sprint: { ...sp, words: sp.words + delta } } : {}) });
         st.repo?.addWords(today(), delta);
         const goal = get().dailyGoal;
-        if (goal > 0 && before < goal && after >= goal) get().notify(`Günün hedefi tamam: ${goal.toLocaleString('tr-TR')} kelime`);
+        if (goal > 0 && before < goal && after >= goal) get().notify(t('Günün hedefi tamam: {n} kelime', { n: goal }));
       }
     },
 
@@ -530,8 +537,8 @@ export const useStore = create<State>((set, get) => {
     },
     updateSettings(patch) {
       set({ settings: { ...get().settings, ...patch } });
-      if (patch.paper) set({ model: buildModel(get().script, patch.paper), revision: get().revision + 1 });
-      if (patch.lang) set({ revision: get().revision + 1 });
+      if (patch.lang) setCaseLang(patch.lang);
+      if (patch.paper || patch.lang) set({ model: buildModel(get().script, get().settings.paper), revision: get().revision + 1 });
       touch({ remodel: false });
     },
     updateScene(sid, patch) {
@@ -551,7 +558,7 @@ export const useStore = create<State>((set, get) => {
       touch({ remodel: false });
     },
     addNote() {
-      const n: DocNote = { id: uid(), title: 'Yeni not', doc: null };
+      const n: DocNote = { id: uid(), title: t('Yeni not'), doc: null };
       set({ notes: [...get().notes, n], active: { kind: 'note', id: n.id }, tab: 'write' });
       touch({ remodel: false });
     },
@@ -576,7 +583,7 @@ export const useStore = create<State>((set, get) => {
       const bySid = new Map(model.scenes.map((s) => [s.sid, s.number]));
       for (const l of doc.content) if (l.attrs?.el === 'sceneHeading') l.attrs.num = lock ? (bySid.get(l.attrs.sid as string) ?? null) : null;
       get().replaceScript(doc);
-      get().notify(lock ? 'Sahne numaraları kilitlendi' : 'Sahne numaralarının kilidi açıldı');
+      get().notify(lock ? t('Sahne numaraları kilitlendi') : t('Sahne numaralarının kilidi açıldı'));
     },
     commitRevisions() {
       const doc = currentJson();
@@ -588,7 +595,7 @@ export const useStore = create<State>((set, get) => {
           .map((c) => (c.marks && !c.marks.length ? { type: c.type, text: c.text } : c));
       }
       get().replaceScript(doc);
-      get().notify('Revizyonlar onaylandı');
+      get().notify(t('Revizyonlar onaylandı'));
     },
     moveRevisionsTo(gen) {
       const doc = currentJson();
@@ -606,7 +613,7 @@ export const useStore = create<State>((set, get) => {
       const snap: Snapshot = {
         id: uid(),
         docKey: st.doc.key,
-        label: label ?? d.toLocaleString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }),
+        label: label ?? d.toLocaleString(locale(), { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }),
         content: st.serialize(),
         wordCount: st.wordCount,
         createdAt: d.getTime(),
@@ -618,7 +625,7 @@ export const useStore = create<State>((set, get) => {
       set({ snapshots: (await get().repo?.listSnapshots(get().doc.key)) ?? [] });
     },
     async restoreSnapshot(s) {
-      await get().takeSnapshot('Geri yüklemeden önce');
+      await get().takeSnapshot(t('Geri yüklemeden önce'));
       const d = parseDocument(s.content, newSid);
       const docState = get().doc;
       load(d, { ...docState, dirty: true });
@@ -653,6 +660,7 @@ export const useStore = create<State>((set, get) => {
     toggle(key, v) {
       const next = v ?? !get()[key];
       if (key === 'spellOn') setPref('wtf.spell', next);
+      if (key === 'tdkOn') setPref('wtf.tdk', next);
       set({ [key]: next } as Partial<State>);
     },
     setDailyGoal(n) {
@@ -682,8 +690,12 @@ export const useStore = create<State>((set, get) => {
       const hit = sp.target ? words >= sp.target : true;
       get().notify(
         completed
-          ? `Seans bitti: ${words.toLocaleString('tr-TR')} kelime${sp.target ? (hit ? ' — hedef tuttu' : ` / ${sp.target.toLocaleString('tr-TR')}`) : ''}`
-          : `Seans durduruldu: ${words.toLocaleString('tr-TR')} kelime`,
+          ? sp.target
+            ? hit
+              ? t('Seans bitti: {n} kelime — hedef tuttu', { n: words })
+              : t('Seans bitti: {n} / {target} kelime', { n: words, target: sp.target })
+            : t('Seans bitti: {n} kelime', { n: words })
+          : t('Seans durduruldu: {n} kelime', { n: words }),
       );
     },
     openDialogBox(d) {
@@ -722,6 +734,6 @@ export const useStore = create<State>((set, get) => {
 /** Pencere başlığı: "dosya.fountain ● — writetheFout." */
 export function windowTitle(st: Pick<State, 'doc' | 'title' | 'status'>): string {
   if (st.status !== 'ready') return 'writetheFout.';
-  const name = st.doc.path ? `${baseName(st.doc.path)}.fountain` : st.title.title || 'Adsız senaryo';
+  const name = st.doc.path ? `${baseName(st.doc.path)}.fountain` : st.title.title || t('Adsız senaryo');
   return `${st.doc.dirty ? '● ' : ''}${name} — writetheFout.`;
 }

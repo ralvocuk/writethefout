@@ -6,6 +6,7 @@ import { unzipSync, strFromU8 } from 'fflate';
 import type { El } from '../script/elements';
 import { line, textNodes, type JDoc, type JLine, type JMark } from '../script/json';
 import { parseFountain, type TitleInfo } from './fountain';
+import { t } from '../i18n';
 import { parseFdx } from './fdx';
 
 export const IMPORT_EXTENSIONS = ['fountain', 'spmd', 'txt', 'fdx', 'highland', 'fadein', 'celtx'];
@@ -20,7 +21,7 @@ function unzip(bytes: Uint8Array) {
   try {
     return unzipSync(bytes);
   } catch {
-    throw new Error('Dosya açılamadı: zip arşivi bozuk ya da desteklenmeyen bir sürüm.');
+    throw new Error(t('Dosya açılamadı: zip arşivi bozuk ya da desteklenmeyen bir sürüm.'));
   }
 }
 
@@ -30,7 +31,7 @@ function parseHighland(bytes: Uint8Array): Imported {
   const candidates = Object.entries(files)
     .filter(([name]) => /\.(fountain|markdown|md|txt)$/i.test(name) && !name.startsWith('__MACOSX'))
     .sort((a, b) => b[1].length - a[1].length);
-  if (!candidates.length) throw new Error('Highland dosyasında senaryo metni bulunamadı.');
+  if (!candidates.length) throw new Error(t('Highland dosyasında senaryo metni bulunamadı.'));
   return { ...parseFountain(strFromU8(candidates[0][1])), format: 'Highland' };
 }
 
@@ -52,7 +53,7 @@ const STYLE_MAP: Record<string, El> = {
 function parseFadeIn(bytes: Uint8Array): Imported {
   const files = unzip(bytes);
   const entry = Object.entries(files).find(([n]) => /document\.xml$/i.test(n));
-  if (!entry) throw new Error('Fade In dosyasında document.xml bulunamadı.');
+  if (!entry) throw new Error(t('Fade In dosyasında document.xml bulunamadı.'));
   const dom = new DOMParser().parseFromString(strFromU8(entry[1]), 'application/xml');
   const out: JLine[] = [];
   for (const p of [...dom.getElementsByTagName('para')]) {
@@ -78,7 +79,7 @@ function parseCeltx(bytes: Uint8Array): Imported {
   const entry = Object.entries(files)
     .filter(([n]) => /script.*\.html?$/i.test(n) || /\.html?$/i.test(n))
     .sort((a, b) => b[1].length - a[1].length)[0];
-  if (!entry) throw new Error('Celtx dosyasında senaryo bulunamadı.');
+  if (!entry) throw new Error(t('Celtx dosyasında senaryo bulunamadı.'));
   const dom = new DOMParser().parseFromString(strFromU8(entry[1]), 'text/html');
   const out: JLine[] = [];
   for (const p of [...dom.querySelectorAll('p')]) {

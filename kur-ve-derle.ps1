@@ -54,7 +54,7 @@ Adim '5/5 Uygulama derleniyor (ilk seferde 5-10 dk)'
 npx tauri build --bundles nsis
 if ($LASTEXITCODE -ne 0) { Write-Host 'Derleme başarısız. kurulum-log.txt dosyasına bak.' -ForegroundColor Red; Stop-Transcript | Out-Null; Read-Host 'Enter'; exit 1 }
 
-$exe = Get-ChildItem -Path (Join-Path $root 'src-tauri\target\release\bundle\nsis') -Filter '*setup.exe' | Select-Object -First 1
+$exe = Get-ChildItem -Path (Join-Path $root 'src-tauri\target\release\bundle\nsis') -Filter '*setup.exe' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 if ($exe) {
   Copy-Item $exe.FullName (Join-Path $root 'writetheFout-Kurulum.exe') -Force
   Write-Host ""

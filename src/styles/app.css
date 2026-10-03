@@ -2804,3 +2804,91 @@ button {
 .num-input.wide {
   width: 110px;
 }
+
+/* Numaralı sahne başlığında etiket, sahne numarasının üstüne çıkar (çakışmasın) */
+.el-flag.over-num {
+  transform: translateY(-17px);
+}
+
+/* ---------- Dil seçici ---------- */
+.lang-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.select.small {
+  height: 24px;
+  min-width: 0;
+  padding: 0 4px;
+  font-size: 12px;
+}
+.welcome-theme {
+  gap: 18px;
+}
+.welcome-theme > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---------- TDK yazım önerisi ---------- */
+.tdk-sug {
+  text-decoration: underline dotted var(--pig-indigo);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+.tdk-target {
+  background: color-mix(in srgb, var(--pig-indigo) 16%, transparent);
+  border-radius: 2px;
+}
+.tdk-bubble {
+  position: absolute;
+  z-index: 15;
+  transform: translate(-100%, 1.35em);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 6px 3px 9px;
+  background: var(--page);
+  border: 1px solid var(--pig-indigo);
+  border-radius: 4px;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.18);
+  font: 12px var(--font-ui);
+  color: var(--ink);
+  white-space: nowrap;
+  pointer-events: none;
+  text-transform: none;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.tdk-bubble small {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pig-indigo);
+}
+.tdk-bubble b {
+  font: 700 14px var(--font-script);
+}
+.tdk-bubble .kbd {
+  font-size: 10px;
+}
+.spell-menu .tdk-option small {
+  margin-left: auto;
+  font: 10px var(--font-ui);
+  color: var(--pig-indigo);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.sp-line {
+  position: relative;
+}
+@media print {
+  .tdk-bubble {
+    display: none;
+  }
+  .tdk-sug {
+    text-decoration: none;
+  }
+}

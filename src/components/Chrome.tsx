@@ -4,17 +4,18 @@ import { UpdateBadge } from './Update';
 import { useStore, type Tab, type Theme } from '../store/useStore';
 import { baseName } from '../script/document';
 import { openFind } from '../commands';
-import { EL_LABEL, REVISIONS, formatNumber } from '../script/elements';
+import { EL_LABEL, REVISIONS } from '../script/elements';
 import { EMPTY_ENTER, NEXT_ON_ENTER, TAB_NEXT } from '../editor/screenplay';
 import { useCaret } from './ScriptEditor';
+import { locale, t } from '../i18n';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'write', label: 'Yaz' },
-  { id: 'board', label: 'Mantar Pano' },
+  { id: 'board', label: 'Pano' },
   { id: 'outline', label: 'Anahat' },
   { id: 'characters', label: 'Karakterler' },
-  { id: 'timeline', label: 'Zaman Çizelgesi' },
-  { id: 'stats', label: 'İstatistik' },
+  { id: 'timeline', label: 'Zaman çizelgesi' },
+  { id: 'stats', label: 'İstatistikler' },
   { id: 'preview', label: 'Önizleme' },
 ];
 
@@ -39,21 +40,21 @@ export function TopBar() {
   const doc = useStore((s) => s.doc);
   const title = useStore((s) => s.title);
   const save = useStore((s) => s.save);
-  const name = doc.path ? `${baseName(doc.path)}.fountain` : title.title || 'Adsız senaryo';
+  const name = doc.path ? `${baseName(doc.path)}.fountain` : title.title || t('Adsız senaryo');
 
   return (
     <header className="topbar">
       <div className="brand">
         <Wordmark />
-        <button className="doc-name" title={doc.path ?? 'Henüz kaydedilmedi — Ctrl+S'} onClick={() => (doc.dirty || !doc.path ? save() : openDialogBox('recent'))}>
-          {doc.dirty ? <i className="dirty-dot" aria-label="kaydedilmemiş" /> : null}
+        <button className="doc-name" title={doc.path ?? t('Henüz kaydedilmedi — Ctrl+S')} onClick={() => (doc.dirty || !doc.path ? save() : openDialogBox('recent'))}>
+          {doc.dirty ? <i className="dirty-dot" aria-label={t('kaydedilmemiş')} /> : null}
           <span>{name}</span>
         </button>
       </div>
       <div className="tabs" role="tablist">
-        {TABS.map((t) => (
-          <button key={t.id} role="tab" className="tab" aria-selected={t.id === tab} onClick={() => setTab(t.id)}>
-            {t.label}
+        {TABS.map((x) => (
+          <button key={x.id} role="tab" className="tab" aria-selected={x.id === tab} onClick={() => setTab(x.id)}>
+            {t(x.label)}
           </button>
         ))}
       </div>
@@ -63,24 +64,24 @@ export function TopBar() {
           className={`rev-toggle ${settings.revisionOn ? 'on' : ''}`}
           style={{ ['--c' as string]: `var(--rev-${settings.revisionGen})` }}
           onClick={() => updateSettings({ revisionOn: !settings.revisionOn })}
-          title="Revizyon modu (Ctrl+Shift+R)"
+          title={t('Revizyon modu (Ctrl+Shift+R)')}
         >
           <i />
-          {settings.revisionOn ? `Revizyon: ${REVISIONS[settings.revisionGen - 1].name}` : 'Revizyon'}
+          {settings.revisionOn ? t('Revizyon: {color}', { color: t(REVISIONS[settings.revisionGen - 1].name) }) : t('Revizyon')}
         </button>
-        <button className="icon-btn" onClick={() => openFind()} title="Bul ve değiştir (Ctrl+F)">
+        <button className="icon-btn" onClick={() => openFind()} title={t('Bul ve değiştir (Ctrl+F)')}>
           <ListMagnifyingGlass size={16} weight="light" />
         </button>
-        <button className="icon-btn" onClick={() => openDialogBox('export')} title="Dışa aktar (Ctrl+E)">
+        <button className="icon-btn" onClick={() => openDialogBox('export')} title={t('Dışa aktar (Ctrl+E)')}>
           <Export size={16} weight="light" />
         </button>
-        <button className="icon-btn" onClick={() => openDialogBox('palette')} title="Komut paleti (Ctrl+K)">
+        <button className="icon-btn" onClick={() => openDialogBox('palette')} title={t('Komut paleti (Ctrl+K)')}>
           <MagnifyingGlass size={16} weight="light" />
         </button>
-        <button className="icon-btn" aria-pressed={focus} onClick={() => toggle('focus')} title="Odak modu (F11)">
+        <button className="icon-btn" aria-pressed={focus} onClick={() => toggle('focus')} title={t('Odak modu (F11)')}>
           <ArrowsOut size={16} weight="light" />
         </button>
-        <button className="icon-btn" aria-pressed={inspector} onClick={() => toggle('inspector')} title="Denetçi (Ctrl+Alt+I)">
+        <button className="icon-btn" aria-pressed={inspector} onClick={() => toggle('inspector')} title={t('Ayrıntılar paneli (Ctrl+Alt+I)')}>
           <SidebarSimple size={16} weight="light" style={{ transform: 'scaleX(-1)' }} />
         </button>
       </div>
@@ -118,12 +119,12 @@ export function Tally({ words, goal }: { words: number; goal: number }) {
     }
   }
   return (
-    <div className="tally" title={`Bugün ${formatNumber(words)} / ${formatNumber(goal)} kelime`}>
+    <div className="tally" title={t('Bugün {words} / {goal} kelime', { words, goal })}>
       <svg width={groups * gw} height={16} aria-hidden>
         {els}
       </svg>
       <span className="num">
-        Bugün {formatNumber(words)} / {formatNumber(goal)}
+        {t('Bugün {words} / {goal}', { words, goal })}
       </span>
     </div>
   );
@@ -140,10 +141,10 @@ export function ThemeSwitch() {
   const theme = useStore((s) => s.theme);
   const setTheme = useStore((s) => s.setTheme);
   return (
-    <div className="theme-switch" role="radiogroup" aria-label="Tema">
-      {THEMES.map((t) => (
-        <button key={t.id} role="radio" aria-checked={theme === t.id} aria-pressed={theme === t.id} title={`Tema: ${t.label}`} onClick={() => setTheme(t.id)}>
-          <i style={{ background: t.swatch }} />
+    <div className="theme-switch" role="radiogroup" aria-label={t('Tema')}>
+      {THEMES.map((x) => (
+        <button key={x.id} role="radio" aria-checked={theme === x.id} aria-pressed={theme === x.id} title={t('Tema: {name}', { name: t(x.label) })} onClick={() => setTheme(x.id)}>
+          <i style={{ background: x.swatch }} />
         </button>
       ))}
     </div>
@@ -172,43 +173,43 @@ export function StatusBar() {
     <footer className="statusbar">
       {onScript ? (
         <span className="num">
-          Sayfa {page.current} / {model?.pages ?? page.total}
-          {scene ? ` · Sahne ${scene.number}` : ''}
+          {t('Sayfa {a} / {b}', { a: page.current, b: model?.pages ?? page.total })}
+          {scene ? ` · ${t('Sahne {n}', { n: scene.number })}` : ''}
         </span>
       ) : (
-        <span className="num">{model?.pages ?? 0} sayfa</span>
+        <span className="num">{t('{n} sayfa', { n: model?.pages ?? 0 })}</span>
       )}
       {onScript && el ? (
         <span className="el-hints">
-          <b>{EL_LABEL[el]}</b> · Enter → {EL_LABEL[NEXT_ON_ENTER[el]]} · boşken → {EL_LABEL[EMPTY_ENTER[el]]} · Tab →{' '}
+          <b>{EL_LABEL[el]}</b> · Enter → {EL_LABEL[NEXT_ON_ENTER[el]]} · {t('boşken')} → {EL_LABEL[EMPTY_ENTER[el]]} · Tab →{' '}
           {EL_LABEL[TAB_NEXT[el]]}
         </span>
       ) : null}
       <span className="grow" />
       {sprint ? <SprintStatus /> : null}
-      <button className="tally-btn" onClick={() => useStore.getState().openDialogBox('goals')} title="Yazma hedefleri ve süreli seans">
+      <button className="tally-btn" onClick={() => useStore.getState().openDialogBox('goals')} title={t('Yazma hedefleri ve süreli seans')}>
         <Tally words={wordsToday} goal={dailyGoal || 1000} />
       </button>
       {zoom !== 1 ? (
-        <button className="text-btn num" title="Gerçek boyut (Ctrl+0)" onClick={() => useStore.getState().setZoom(1)}>
-          %{Math.round(zoom * 100)}
+        <button className="text-btn num" title={t('Gerçek boyut (Ctrl+0)')} onClick={() => useStore.getState().setZoom(1)}>
+          {t('%{n}', { n: Math.round(zoom * 100) })}
         </button>
       ) : null}
       <span
         className={`save-state ${saving ? 'saving' : doc.dirty ? 'dirty' : ''}`}
-        title={doc.path ? `${doc.path}${autosave ? ' · otomatik kayıt açık' : ''}` : 'Henüz bir dosyaya kaydedilmedi'}
+        title={doc.path ? `${doc.path}${autosave ? ` · ${t('otomatik kayıt açık')}` : ''}` : t('Henüz bir dosyaya kaydedilmedi')}
       >
         {saving
-          ? 'Kaydediliyor…'
+          ? t('Kaydediliyor…')
           : !doc.path
-            ? 'Kaydedilmedi'
+            ? t('Kaydedilmedi')
             : doc.dirty
               ? autosave
-                ? 'Değişiklikler kaydedilecek'
-                : 'Kaydedilmemiş değişiklikler'
+                ? t('Değişiklikler kaydedilecek')
+                : t('Kaydedilmemiş değişiklikler')
               : lastSaved
-                ? `Kaydedildi ${new Date(lastSaved).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`
-                : 'Kayıtlı'}
+                ? t('Kaydedildi {time}', { time: new Date(lastSaved).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' }) })
+                : t('Kayıtlı')}
       </span>
       <ThemeSwitch />
     </footer>

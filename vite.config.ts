@@ -10,6 +10,12 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
+  server: {
+    // geliştirme sırasında TDK sözlüğüne CORS'suz erişim (masaüstünde Rust üzerinden gider)
+    proxy: {
+      '/tdk': { target: 'https://sozluk.gov.tr', changeOrigin: true, rewrite: (p) => p.replace(/^\/tdk/, '') },
+    },
+  },
   worker: {
     format: 'es',
   },

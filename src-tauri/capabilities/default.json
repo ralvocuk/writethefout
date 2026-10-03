@@ -29,6 +29,14 @@
           "path": "**"
         }
       ]
+    },
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "https://sozluk.gov.tr/*"
+        }
+      ]
     }
   ]
 }

@@ -3,6 +3,7 @@ import { STATUS_LABEL, emptySceneMeta, type Status } from '../data/types';
 import { colorVar, formatEighths } from '../script/elements';
 import { FilterBar } from './Board';
 import { ColorPicker } from './Inspector';
+import { t } from '../i18n';
 
 /** Anahat: tüm sahneler tek tabloda, süzülebilir ve düzenlenebilir. */
 export function Outline() {
@@ -27,14 +28,14 @@ export function Outline() {
         <thead>
           <tr>
             <th className="num">#</th>
-            <th>Sahne</th>
-            <th>Zaman</th>
-            <th className="num">Sayfa</th>
-            <th className="num">Uzunluk</th>
-            <th>Karakterler</th>
-            <th>Özet</th>
-            <th>Renk</th>
-            <th>Durum</th>
+            <th>{t('Sahne')}</th>
+            <th>{t('Zaman')}</th>
+            <th className="num">{t('Sayfa')}</th>
+            <th className="num">{t('Uzunluk')}</th>
+            <th>{t('Karakterler')}</th>
+            <th>{t('Özet')}</th>
+            <th>{t('Renk')}</th>
+            <th>{t('Durum')}</th>
           </tr>
         </thead>
         <tbody>
@@ -45,15 +46,15 @@ export function Outline() {
             lastSection = s.section;
             return [
               showSection && s.section ? (
-                <tr key={`sec-${s.sid}`} className="outline-section">
+                <tr key={`sec-${s.sid}`} className="outline-section" lang={useStore.getState().settings.lang}>
                   <td colSpan={9}>{s.section}</td>
                 </tr>
               ) : null,
               <tr key={s.sid} style={{ ['--strip' as string]: color ? `var(${color})` : 'transparent' }}>
                 <td className="num no">{s.number}</td>
                 <td>
-                  <button className="link" onClick={() => openScript(s.sid)}>
-                    {s.intExt ? <span className="ie">{s.intExt}.</span> : null} {s.location || s.heading || 'Başlıksız'}
+                  <button className="link" lang={useStore.getState().settings.lang} onClick={() => openScript(s.sid)}>
+                    {s.intExt ? <span className="ie">{s.intExt}.</span> : null} {s.location || s.heading || t('Başlıksız sahne')}
                   </button>
                   {s.notes.length ? <span className="note-dot" title={s.notes.join('\n')} /> : null}
                 </td>
@@ -65,7 +66,7 @@ export function Outline() {
                   <input
                     className="cell-input"
                     value={sm.synopsis}
-                    placeholder="Özet…"
+                    placeholder={t('Özet…')}
                     onChange={(e) => updateScene(s.sid, { synopsis: e.target.value })}
                   />
                 </td>
@@ -86,7 +87,7 @@ export function Outline() {
           })}
         </tbody>
       </table>
-      {rows.length === 0 ? <p className="hint">Eşleşen sahne yok.</p> : null}
+      {rows.length === 0 ? <p className="hint">{t('Eşleşen sahne yok.')}</p> : null}
     </div>
   );
 }

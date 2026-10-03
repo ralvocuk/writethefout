@@ -2,8 +2,9 @@
 import { blockText, type ScriptBlock } from '../script/blocks';
 import type { El } from '../script/elements';
 import { line, textNodes, type JDoc, type JLine, type JMark } from '../script/json';
-import { upper, type Lang } from './layout';
+import { scriptLabels, upper, type Lang } from './layout';
 import { REVISIONS } from '../script/elements';
+import { t } from '../i18n';
 import type { TitleInfo } from './fountain';
 
 const TYPE: Partial<Record<El, string>> = {
@@ -75,7 +76,7 @@ export function toFdx(blocks: ScriptBlock[], title: TitleInfo | null, lang: Lang
     <Content>
       <Paragraph Alignment="Center" Type="Action"><Text>${xml(upper(title.title, lang))}</Text></Paragraph>
       <Paragraph Alignment="Center" Type="Action"><Text></Text></Paragraph>
-      <Paragraph Alignment="Center" Type="Action"><Text>${lang === 'tr' ? 'Yazan' : 'Written by'}</Text></Paragraph>
+      <Paragraph Alignment="Center" Type="Action"><Text>${xml(scriptLabels(lang).written)}</Text></Paragraph>
       <Paragraph Alignment="Center" Type="Action"><Text>${xml(title.author)}</Text></Paragraph>
 ${title.contact
   .split('\n')
@@ -90,7 +91,7 @@ ${title.contact
   const gens = [...new Set(blocks.flatMap((b) => b.runs.map((r) => r.rev ?? 0)).filter(Boolean))].sort();
   const revisions = gens.length
     ? `  <Revisions ActiveSet="${Math.max(...gens)}" Location="7.75" RevisionMode="Active" RevisionsShown="Active" ShowAllMarks="No" ShowAllSets="No">
-${REVISIONS.map((r, i) => `    <Revision Color="${r.color}" FullRevision="False" ID="${i + 1}" Mark="*" Name="${xml(lang === 'tr' ? `${r.name} revizyon` : `${r.en} Rev.`)}" PageColor="${r.color}" Style=""/>`).join('\n')}
+${REVISIONS.map((r, i) => `    <Revision Color="${r.color}" FullRevision="False" ID="${i + 1}" Mark="*" Name="${xml(scriptLabels(lang).revision(i + 1))}" PageColor="${r.color}" Style=""/>`).join('\n')}
   </Revisions>
 `
     : '';
@@ -120,7 +121,7 @@ const FROM_TYPE: Record<string, El> = {
 
 export function parseFdx(src: string): { title: Partial<TitleInfo>; doc: JDoc } {
   const dom = new DOMParser().parseFromString(src, 'application/xml');
-  if (dom.querySelector('parsererror')) throw new Error('Final Draft dosyası okunamadı (XML hatalı).');
+  if (dom.querySelector('parsererror')) throw new Error(t('Final Draft dosyası okunamadı (XML hatalı).'));
   const content = dom.querySelector('FinalDraft > Content') ?? dom.querySelector('Content');
   const out: JLine[] = [];
 

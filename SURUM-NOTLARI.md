@@ -1,6 +1,4 @@
-writetheFout. 0.5.0
+writetheFout. 0.6.0
 
-* Uygulama daha tutarlı hâle getirildi, şu anda oturup senaryo yazılabilir ve bir workspace oluşturulabilir.
-
-
+* Çeşitli hatalar giderildi, sozluk.gov.tr API'ına bağlanıldı.
 

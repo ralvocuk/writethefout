@@ -4,6 +4,7 @@ import { Modal } from './Dialogs';
 import { today, type DayWords, type Sprint } from '../data/repository';
 import { addDays, formatClock, lastDays, streakOf } from '../script/goals';
 import { formatNumber } from '../script/elements';
+import { locale, t } from '../i18n';
 
 const close = () => useStore.getState().openDialogBox(null);
 const PRESETS = [10, 15, 25, 45, 60];
@@ -34,11 +35,11 @@ export function GoalsDialog() {
   }, [open, repo, sprint]);
 
   if (!open) return null;
-  const t = today();
+  const td = today();
   // bugünün canlı sayısını geçmişe işle
-  const hist = [...history.filter((h) => h.day !== t), { day: t, words: wordsToday }];
-  const streak = streakOf(hist, Math.max(1, goal), t);
-  const days = lastDays(hist, DAYS, t);
+  const hist = [...history.filter((h) => h.day !== td), { day: td, words: wordsToday }];
+  const streak = streakOf(hist, Math.max(1, goal), td);
+  const days = lastDays(hist, DAYS, td);
   const max = Math.max(goal, ...days.map((d) => d.words), 1);
   const total30 = days.reduce((a, d) => a + d.words, 0);
   const pct = goal ? Math.min(100, Math.round((wordsToday / goal) * 100)) : 0;
@@ -50,32 +51,32 @@ export function GoalsDialog() {
   };
 
   return (
-    <Modal title="Yazma hedefleri" aside={`Bugün ${formatNumber(wordsToday)} kelime`} onClose={close} wide>
+    <Modal title={t('Yazma hedefleri')} aside={t('Bugün {n} kelime', { n: wordsToday })} onClose={close} wide>
       <div className="dialog-body goals">
         <section className="goal-top">
           <div className="goal-stat">
-            <span className="goal-n num">%{pct}</span>
-            <span className="muted">günün hedefi</span>
+            <span className="goal-n num">{t('%{n}', { n: pct })}</span>
+            <span className="muted">{t('günün hedefi')}</span>
             <div className="progress">
               <i className={pct >= 100 ? 'full' : ''} style={{ width: `${pct}%` }} />
             </div>
           </div>
           <div className="goal-stat">
             <span className="goal-n num">{streak.current}</span>
-            <span className="muted">gün üst üste{streak.todayDone ? '' : ' (bugün henüz değil)'}</span>
+            <span className="muted">{streak.todayDone ? t('gün üst üste') : t('gün üst üste (bugün henüz değil)')}</span>
           </div>
           <div className="goal-stat">
             <span className="goal-n num">{streak.longest}</span>
-            <span className="muted">en uzun seri</span>
+            <span className="muted">{t('en uzun seri')}</span>
           </div>
           <div className="goal-stat">
             <span className="goal-n num">{formatNumber(total30)}</span>
-            <span className="muted">son {DAYS} gün</span>
+            <span className="muted">{t('son {n} gün', { n: DAYS })}</span>
           </div>
         </section>
 
         <label className="opt-row goal-input">
-          <span className="muted">Günlük hedef</span>
+          <span className="muted">{t('Günlük hedef')}</span>
           <span>
             <input
               className="num-input"
@@ -84,9 +85,9 @@ export function GoalsDialog() {
               onChange={(e) => setGoalText(e.target.value)}
               onBlur={commitGoal}
               onKeyDown={(e) => e.key === 'Enter' && commitGoal()}
-              aria-label="Günlük kelime hedefi"
+              aria-label={t('Günlük kelime hedefi')}
             />{' '}
-            <span className="muted">kelime</span>
+            <span className="muted">{t('kelime')}</span>
             <span className="goal-presets">
               {[250, 500, 1000, 1500, 2000].map((n) => (
                 <button key={n} className="chip-btn" aria-pressed={goal === n} onClick={() => (setGoal(n), setGoalText(String(n)))}>
@@ -97,38 +98,38 @@ export function GoalsDialog() {
           </span>
         </label>
 
-        <div className="goal-chart" role="img" aria-label={`Son ${DAYS} günde yazılan kelimeler`}>
-          {goal ? <div className="goal-line" style={{ bottom: `${(goal / max) * 100}%` }} title={`Hedef: ${formatNumber(goal)}`} /> : null}
+        <div className="goal-chart" role="img" aria-label={t('Son {n} günde yazılan kelimeler', { n: DAYS })}>
+          {goal ? <div className="goal-line" style={{ bottom: `${(goal / max) * 100}%` }} title={t('Hedef: {n}', { n: goal })} /> : null}
           {days.map((d) => (
             <div
               key={d.day}
-              className={`goal-bar ${d.words >= goal && goal ? 'hit' : ''} ${d.day === t ? 'today' : ''}`}
-              title={`${new Date(d.day + 'T12:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'short' })}: ${formatNumber(d.words)} kelime`}
+              className={`goal-bar ${d.words >= goal && goal ? 'hit' : ''} ${d.day === td ? 'today' : ''}`}
+              title={`${new Date(d.day + 'T12:00').toLocaleDateString(locale(), { day: 'numeric', month: 'long', weekday: 'short' })}: ${t('{n} kelime', { n: d.words })}`}
             >
               <i style={{ height: `${(d.words / max) * 100}%` }} />
             </div>
           ))}
         </div>
         <div className="goal-axis muted num">
-          <span>{new Date(days[0].day + 'T12:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}</span>
-          <span>bugün</span>
+          <span>{new Date(days[0].day + 'T12:00').toLocaleDateString(locale(), { day: 'numeric', month: 'short' })}</span>
+          <span>{t('bugün')}</span>
         </div>
 
-        <h3 className="label goal-h">Süreli seans</h3>
+        <h3 className="label goal-h">{t('Süreli seans')}</h3>
         {sprint ? (
           <SprintStatus big onStop={() => stopSprint(false)} />
         ) : (
           <div className="sprint-setup">
-            <div className="segmented sprint-len" role="radiogroup" aria-label="Süre">
+            <div className="segmented sprint-len" role="radiogroup" aria-label={t('Süre')}>
               {PRESETS.map((m) => (
                 <button key={m} role="radio" aria-checked={minutes === m} aria-pressed={minutes === m} onClick={() => setMinutes(m)}>
-                  {m} dk
+                  {t('{n} dk', { n: m })}
                 </button>
               ))}
             </div>
             <label className="sprint-target">
-              <span className="muted">Kelime hedefi</span>
-              <input className="num-input wide" inputMode="numeric" placeholder="isteğe bağlı" value={target} onChange={(e) => setTarget(e.target.value.replace(/\D/g, ''))} />
+              <span className="muted">{t('Kelime hedefi')}</span>
+              <input className="num-input wide" inputMode="numeric" placeholder={t('isteğe bağlı')} value={target} onChange={(e) => setTarget(e.target.value.replace(/\D/g, ''))} />
             </label>
             <button
               className="btn primary"
@@ -137,7 +138,7 @@ export function GoalsDialog() {
                 close();
               }}
             >
-              Seansı başlat
+              {t('Seansı başlat')}
             </button>
           </div>
         )}
@@ -146,13 +147,13 @@ export function GoalsDialog() {
             {sprints.map((s) => (
               <div key={s.id} className="sprint-row">
                 <span className="muted num">
-                  {new Date(s.startedAt).toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  {new Date(s.startedAt).toLocaleString(locale(), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                 </span>
-                <span className="num">{s.minutes} dk</span>
+                <span className="num">{t('{n} dk', { n: s.minutes })}</span>
                 <span className="num">
-                  {formatNumber(s.words)} kelime{s.target ? ` / ${formatNumber(s.target)}` : ''}
+                  {s.target ? t('{n} / {target} kelime', { n: s.words, target: s.target }) : t('{n} kelime', { n: s.words })}
                 </span>
-                <span className={s.target && s.words >= s.target ? 'ok' : 'muted'}>{s.completed ? (s.target ? (s.words >= s.target ? 'hedef tuttu' : 'tamamlandı') : 'tamamlandı') : 'yarıda bırakıldı'}</span>
+                <span className={s.target && s.words >= s.target ? 'ok' : 'muted'}>{s.completed ? (s.target && s.words >= s.target ? t('hedef tuttu') : t('tamamlandı')) : t('yarıda bırakıldı')}</span>
               </div>
             ))}
           </div>
@@ -167,8 +168,8 @@ function useNow(active: boolean) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     if (!active) return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
+    const iv = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(iv);
   }, [active]);
   return now;
 }
@@ -182,7 +183,7 @@ export function SprintStatus({ big, onStop }: { big?: boolean; onStop?: () => vo
   const words = Math.max(0, sprint.words);
   const frac = Math.min(1, (now - sprint.startedAt) / (sprint.minutes * 60000));
   return (
-    <div className={`sprint ${big ? 'big' : ''}`} title="Süreli seans">
+    <div className={`sprint ${big ? 'big' : ''}`} title={t('Süreli seans')}>
       <svg width={big ? 28 : 14} height={big ? 28 : 14} viewBox="0 0 20 20" aria-hidden>
         <circle cx="10" cy="10" r="8" fill="none" stroke="var(--rule-strong)" strokeWidth="2.4" />
         <circle
@@ -198,11 +199,10 @@ export function SprintStatus({ big, onStop }: { big?: boolean; onStop?: () => vo
       </svg>
       <span className="num">{formatClock(left)}</span>
       <span className="num muted">
-        {formatNumber(words)}
-        {sprint.target ? ` / ${formatNumber(sprint.target)}` : ''} k.
+        {sprint.target ? t('{n} / {target} k.', { n: words, target: sprint.target }) : t('{n} k.', { n: words })}
       </span>
       <button className="text-btn" onClick={onStop ?? (() => useStore.getState().stopSprint(false))}>
-        Durdur
+        {t('Durdur')}
       </button>
     </div>
   );
@@ -214,7 +214,7 @@ export function useSprintTimer() {
   useEffect(() => {
     if (!sprint) return;
     const end = sprint.startedAt + sprint.minutes * 60000;
-    const t = setTimeout(() => useStore.getState().stopSprint(true), Math.max(0, end - Date.now()));
-    return () => clearTimeout(t);
+    const tm = setTimeout(() => useStore.getState().stopSprint(true), Math.max(0, end - Date.now()));
+    return () => clearTimeout(tm);
   }, [sprint?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 }
