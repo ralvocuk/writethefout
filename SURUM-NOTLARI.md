@@ -1,4 +1,6 @@
-writetheFout. 0.6.1
+writetheFout. 0.6.2
 
-* Debugging yapıldı, sözlük sistemi geliştirildi.
+* Debugging + sözlük geliştirme.
+
+
 
