@@ -2847,8 +2847,9 @@ button {
   z-index: 15;
   transform: translate(-100%, 1.35em);
   display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
   padding: 3px 6px 3px 9px;
   background: var(--page);
   border: 1px solid var(--pig-indigo);
@@ -2891,4 +2892,39 @@ button {
   .tdk-sug {
     text-decoration: none;
   }
+}
+
+.tdk-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tdk-meaning {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-width: 360px;
+  white-space: normal;
+  font-size: 11.5px;
+  color: var(--ink-2);
+  line-height: 1.35;
+  border-top: 1px solid var(--rule);
+  padding-top: 3px;
+}
+.tdk-meaning i {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--ink);
+}
+.tdk-bubble.spell {
+  border-color: var(--accent);
+}
+.tdk-bubble.spell small {
+  color: var(--accent-ink);
+}
+.tdk-bubble.ambiguous {
+  border-style: dashed;
+}
+.tdk-target.spell {
+  background: var(--accent-wash);
 }

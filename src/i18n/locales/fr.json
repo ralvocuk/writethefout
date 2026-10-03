@@ -465,5 +465,7 @@
  "TDK yazım önerilerini aç": "Activer les suggestions TDK",
  "TDK yazım önerilerini kapat": "Désactiver les suggestions TDK",
  "TDK yazımı": "Orthographe TDK",
- "Yazmayı bıraktığın kelime TDK Güncel Türkçe Sözlük’te farklı yazılıyorsa (mekan → mekân) altında öneri çıkar; Enter kabul eder, Esc kapatır. Kelime sozluk.gov.tr’ye gönderilir, sonuç bilgisayarında saklanır. İnternet yoksa sessizce atlanır.": "Si vous marquez une pause après un mot que le dictionnaire de la TDK écrit autrement (mekan → mekân), une suggestion apparaît dessous ; Entrée l’accepte, Échap la ferme. Le mot est envoyé à sozluk.gov.tr et le résultat est conservé sur votre ordinateur. Ignoré sans connexion."
+ "Yazım": "Orthographe",
+ "Bunu mu demek istediniz?": "Vouliez-vous dire ?",
+ "Yazmayı bıraktığın kelime yanlışsa (seyehat → seyahat) ya da TDK Güncel Türkçe Sözlük’te farklı yazılıyorsa (mekan → mekân) altında öneri çıkar; anlamı değişen çiftlerde (hala / hâlâ) iki anlam da gösterilir. Enter kabul eder, Esc kapatır. Kelime sozluk.gov.tr’ye gönderilir, sonuç bilgisayarında saklanır. İnternet yoksa sessizce atlanır.": "Si vous marquez une pause après un mot mal orthographié (seyehat → seyahat) ou que le dictionnaire de la TDK écrit autrement (mekan → mekân), une suggestion apparaît dessous ; pour les paires de sens différent (hala / hâlâ), les deux sens sont affichés. Entrée l’accepte, Échap la ferme. Le mot est envoyé à sozluk.gov.tr et le résultat est conservé sur votre ordinateur. Ignoré sans connexion."
 }

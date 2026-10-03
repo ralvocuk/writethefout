@@ -62,7 +62,7 @@ export function DictionaryDialog() {
           <span>
             {t('TDK yazım önerileri (Türkçe senaryolarda)')}
             <span className="hint" style={{ display: 'block', margin: '2px 0 0' }}>
-              {t('Yazmayı bıraktığın kelime TDK Güncel Türkçe Sözlük’te farklı yazılıyorsa (mekan → mekân) altında öneri çıkar; Enter kabul eder, Esc kapatır. Kelime sozluk.gov.tr’ye gönderilir, sonuç bilgisayarında saklanır. İnternet yoksa sessizce atlanır.')}
+              {t('Yazmayı bıraktığın kelime yanlışsa (seyehat → seyahat) ya da TDK Güncel Türkçe Sözlük’te farklı yazılıyorsa (mekan → mekân) altında öneri çıkar; anlamı değişen çiftlerde (hala / hâlâ) iki anlam da gösterilir. Enter kabul eder, Esc kapatır. Kelime sozluk.gov.tr’ye gönderilir, sonuç bilgisayarında saklanır. İnternet yoksa sessizce atlanır.')}
             </span>
           </span>
         </label>

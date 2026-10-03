@@ -127,8 +127,11 @@ function EditorInner() {
       DelMark,
       Search,
       TdkSuggest.configure({
-        enabled: () => useStore.getState().tdkOn && useStore.getState().settings.lang === 'tr',
-        hint: () => t('TDK yazımı'),
+        tdk: () => useStore.getState().tdkOn && useStore.getState().settings.lang === 'tr',
+        spell: () => useStore.getState().spellOn && spell.supports(useStore.getState().settings.lang),
+        isWrong: (w) => spell.check(w),
+        suggestions: (w) => spell.suggest(w),
+        labels: () => ({ spell: t('Yazım'), tdk: t('TDK yazımı'), ambiguous: t('Bunu mu demek istediniz?') }),
       }),
       SpellCheck.configure({ enabled: () => useStore.getState().spellOn && spell.supports(useStore.getState().settings.lang) }),
       ScreenplayKeys.configure({

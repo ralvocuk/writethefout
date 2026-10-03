@@ -1,4 +1,4 @@
-writetheFout. 0.6.0
+writetheFout. 0.6.1
 
-* Çeşitli hatalar giderildi, sozluk.gov.tr API'ına bağlanıldı.
+* Debugging yapıldı, sözlük sistemi geliştirildi.
 

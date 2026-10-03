@@ -81,6 +81,14 @@ if (-not $origin) {
 }
 $repo = ($origin -replace '^https://github.com/', '' -replace '\.git$', '')
 Write-Host "Depo: $repo"
+# güncelleme adresi: KUR-VE-DERLE ile yapılan yerel derlemeler de bu depodan güncellensin
+$endpoint = "https://github.com/$repo/releases/latest/download/latest.json"
+$confText = [IO.File]::ReadAllText($confPath)
+if ($confText -notmatch [regex]::Escape($endpoint)) {
+  $confText = [regex]::Replace($confText, '"endpoints":\s*\[[^\]]*\]', ('"endpoints": [ "' + $endpoint + '" ]'))
+  Utf8Yaz $confPath $confText
+  Write-Host "Güncelleme adresi yazıldı: $endpoint"
+}
 gh secret set TAURI_SIGNING_PRIVATE_KEY --repo $repo --body ((Get-Content $key -Raw).Trim())
 if ($LASTEXITCODE -ne 0) { Hata 'İmza anahtarı depoya eklenemedi.' }
 $wf = Join-Path $root '.github\workflows'

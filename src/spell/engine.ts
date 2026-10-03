@@ -2,6 +2,8 @@
  * Yazım denetimi çekirdeği (nspell + Hunspell sözlükleri: Türkçe, İngilizce, İspanyolca).
  * Saf fonksiyonlar: hem web worker'da hem testlerde kullanılır. Dil `setSpellLang` ile seçilir.
  */
+import { COMMON_TR, editDistance } from './common-tr';
+
 export interface Speller {
   correct(word: string): boolean;
   suggest(word: string): string[];
@@ -54,6 +56,8 @@ export function checkWord(sp: Speller, raw: string): boolean {
   const w = normalizeWord(raw).replace(/^'+|'+$/g, '');
   if (w.length < 2) return true;
   if (/\d/.test(w)) return true;
+  // sık yapılan yanlışlar sözlükte geçse bile yanlış sayılır (mütevazi → mütevazı)
+  if (LANG === 'tr' && COMMON_TR[lowerTr(w)]) return false;
   if (known(sp, w)) return true;
   // Özel ad + ek: "Hikmet'in", "NERMİN'İN" → kesmeden önceki kısım
   const ap = w.indexOf("'");
@@ -99,12 +103,16 @@ export function suggestWord(sp: Speller, raw: string, limit = 7): string[] {
     seen.add(k);
     out.push(s);
   };
+  if (LANG === 'tr' && COMMON_TR[lo]) add(COMMON_TR[lo]);
   for (const v of diacriticVariants(sp, lo)) add(v);
-  for (const s of sp.suggest(lo)) {
+  // nspell önerilerini yazılana yakınlığa göre sırala (yer değiştirme 1 sayılır: yanlız → yalnız)
+  const ranked = sp
+    .suggest(lo)
     // nspell bazen dile uymayan büyük harf biçimleri döndürür (GIDIYORUM): ele
-    if (s.length > 1 && s === s.toUpperCase() && s !== s.toLowerCase()) continue;
-    add(s);
-  }
+    .filter((s) => !(s.length > 1 && s === s.toUpperCase() && s !== s.toLowerCase()))
+    .map((s, i) => ({ s, i, d: editDistance(lo, lowerTr(s)), first: lowerTr(s)[0] === lo[0] ? 0 : 1, len: Math.abs(s.length - lo.length) }))
+    .sort((a, b) => a.d - b.d || a.first - b.first || a.len - b.len || a.i - b.i);
+  for (const r of ranked) add(r.s);
   if (cap || caps) for (const s of sp.suggest(capTr(lo))) if (!(s.length > 1 && s === s.toUpperCase())) add(s);
   return out.slice(0, limit).map((s) => (caps ? upperTr(s) : cap ? capTr(s) : s));
 }

@@ -3,6 +3,7 @@
  * kişisel sözlüğü ve "yoksay" listesini tutar.
  */
 import { SPELL_LANGS, normalizeWord, type SpellLang } from './engine';
+import { knownInTdk } from './tdk';
 
 type Listener = () => void;
 
@@ -112,6 +113,8 @@ class SpellClient {
     if (this.user.has(k) || this.ignored.has(k) || this.names.has(k)) return false;
     const base = k.split("'")[0];
     if (base !== k && (this.user.has(base) || this.names.has(base))) return false;
+    // TDK sözlüğünde madde olarak geçiyorsa doğru (Hunspell'de olmayan yeni kelimeler)
+    if (this.lang === 'tr' && knownInTdk(word)) return false;
     const v = this.cache.get(word);
     return v === undefined ? undefined : !v;
   }
@@ -129,6 +132,17 @@ class SpellClient {
       })
       .catch(() => {})
       .finally(() => todo.forEach((w) => this.inflight.delete(w)));
+  }
+
+  /** Tek kelimeyi hemen denetle (yanıtı bekler); sözlük hazır değilse undefined */
+  async check(word: string): Promise<boolean | undefined> {
+    const known = this.isWrong(word);
+    if (known !== undefined) return known;
+    if (this.status !== 'ready') return undefined;
+    const res = await this.call<Record<string, boolean>>({ type: 'check', words: [word] }).catch(() => null);
+    if (!res) return undefined;
+    this.cache.set(word, res[word]);
+    return this.isWrong(word);
   }
 
   suggest(word: string): Promise<string[]> {

@@ -465,5 +465,7 @@
  "TDK yazım önerilerini aç": "Turn on TDK spelling suggestions",
  "TDK yazım önerilerini kapat": "Turn off TDK spelling suggestions",
  "TDK yazımı": "TDK spelling",
- "Yazmayı bıraktığın kelime TDK Güncel Türkçe Sözlük’te farklı yazılıyorsa (mekan → mekân) altında öneri çıkar; Enter kabul eder, Esc kapatır. Kelime sozluk.gov.tr’ye gönderilir, sonuç bilgisayarında saklanır. İnternet yoksa sessizce atlanır.": "When you pause after a word that the TDK Turkish Dictionary spells differently (mekan → mekân), a suggestion appears under it; Enter accepts, Esc dismisses. The word is sent to sozluk.gov.tr and the result is cached on your computer. Skipped silently when offline."
+ "Yazım": "Spelling",
+ "Bunu mu demek istediniz?": "Did you mean?",
+ "Yazmayı bıraktığın kelime yanlışsa (seyehat → seyahat) ya da TDK Güncel Türkçe Sözlük’te farklı yazılıyorsa (mekan → mekân) altında öneri çıkar; anlamı değişen çiftlerde (hala / hâlâ) iki anlam da gösterilir. Enter kabul eder, Esc kapatır. Kelime sozluk.gov.tr’ye gönderilir, sonuç bilgisayarında saklanır. İnternet yoksa sessizce atlanır.": "When you pause after a misspelled word (seyehat → seyahat) or one the TDK Turkish Dictionary spells differently (mekan → mekân), a suggestion appears under it; for pairs with different meanings (hala / hâlâ) both meanings are shown. Enter accepts, Esc dismisses. The word is sent to sozluk.gov.tr and the result is cached on your computer. Skipped silently when offline."
 }

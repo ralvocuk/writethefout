@@ -90,9 +90,11 @@ indirip kurar ve yeniden açılır. Elle denetlemek için: Yardım › Güncelle
   ((DEVAM EDİYOR)/(DEVAM), (MORE)/(CONT'D), (WEITER)/(FORTS.), (SIGUE)/(CONT.), (À SUIVRE)/(SUITE)),
   başlık sayfası yazar satırı, revizyon renk adları, sahne başlığı ve geçiş önerileri, büyük harf kuralı
   (Türkçede i → İ). Almanca INNEN/AUSSEN başlıkları tanınır.
-- **TDK yazım önerileri** (Türkçe senaryolarda): yazmayı bıraktığın kelime TDK Güncel Türkçe Sözlük'te farklı
-  yazılıyorsa (mekan → mekân, hikayeyi → hikâyeyi) altında öneri çıkar; **Enter** kabul eder, **Esc** kapatır.
-  Anlamı değişen çiftlere (kar/kâr, hala/hâlâ) dokunmaz. Daha önce bulunanlar noktalı mavi çizgiyle görünür,
+- **Yazarken öneri balonu:** yazmayı bıraktığın kelime yanlışsa (seyehat → seyahat, yanlız → yalnız,
+  herşey → her şey) ya da TDK Güncel Türkçe Sözlük'te farklı yazılıyorsa (mekan → mekân, hikayeyi → hikâyeyi)
+  altında öneri çıkar; **Enter** kabul eder, **Esc** kapatır. Anlamı değişen çiftlerde (hala / hâlâ, kar / kâr)
+  "Bunu mu demek istediniz?" diye iki anlamıyla sorar; Esc'ye basarsan o kelime için bir daha sormaz.
+  Sık yapılan yazım yanlışları listesi (`src/spell/common-tr.ts`) doğru biçimi ilk öneri yapar. Daha önce bulunanlar noktalı mavi çizgiyle görünür,
   sağ tıkla düzeltilir. Kelimeler sozluk.gov.tr'ye gider, sonuçlar bilgisayarda saklanır; Düzen menüsünden kapatılır.
 - **Yazım denetimi** senaryo diline göre: Türkçe, İngilizce, İspanyolca. Almanca ve Fransızca sözlükler
   (bileşik kelime desteği ve bellek kullanımı yüzünden) henüz yok.
@@ -138,5 +140,5 @@ Uygulama verileri: `%APPDATA%\app.writethefout.desktop\` (`writethefout.db`, `ye
 npm install
 npm run app        # geliştirme modunda masaüstü uygulaması
 npm run installer  # kurulum dosyası
-npm test           # 83 test: tuş akışı, revizyon, sayfalama, dosya biçimi, içe/dışa aktarma, PDF, yazım, hedefler, oyuncu sayfaları, çeviriler, senaryo dilleri
+npm test           # 86 test: tuş akışı, revizyon, sayfalama, dosya biçimi, içe/dışa aktarma, PDF, yazım, hedefler, oyuncu sayfaları, çeviriler, senaryo dilleri
 ```
