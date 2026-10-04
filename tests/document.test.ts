@@ -15,7 +15,7 @@ function richDoc(): ScriptDocument {
     type: 'doc',
     content: [
       { type: 'line', attrs: { el: 'section' }, content: [T('Birinci Perde')] },
-      { type: 'line', attrs: { el: 'sceneHeading', sid: 'a', num: '1' }, content: [T('Dış. iskele - Gece')] },
+      { type: 'line', attrs: { el: 'sceneHeading', sid: 'a', num: '1', pageLock: 3 }, content: [T('Dış. iskele - Gece')] },
       {
         type: 'line',
         attrs: { el: 'action' },
@@ -51,7 +51,7 @@ function richDoc(): ScriptDocument {
   };
 }
 
-const norm = (d: JDoc) => JSON.stringify(d.content.map((l) => ({ el: l.attrs.el, sid: l.attrs.sid ?? null, num: l.attrs.num ?? null, dual: !!l.attrs.dual, c: l.content })));
+const norm = (d: JDoc) => JSON.stringify(d.content.map((l) => ({ el: l.attrs.el, sid: l.attrs.sid ?? null, num: l.attrs.num ?? null, dual: !!l.attrs.dual, pageLock: l.attrs.pageLock ?? null, c: l.content })));
 
 describe('belge biçimi', () => {
   it('kayıpsız gidiş-dönüş: metin, işaretler, sahne bilgileri, karakterler, notlar, başlık', () => {
@@ -66,6 +66,7 @@ describe('belge biçimi', () => {
     expect(back.title.source).toBe('Bir romandan');
     expect(back.title.contact).toBe('a@b.c\n0555');
     expect(back.settings.revisionGen).toBe(2);
+    expect(back.doc.content.find((l) => l.attrs.sid === 'a')?.attrs.pageLock).toBe(3);
   });
 
   it('ikinci kez kaydetmek aynı dosyayı üretir (kararlı)', () => {

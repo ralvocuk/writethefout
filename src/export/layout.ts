@@ -188,6 +188,8 @@ export interface PLine {
   pair?: PLine;
   /** sahne kimliği (uzunluk hesabı) */
   sid?: string;
+  /** sahne başlığı için sabit başlangıç sayfası */
+  pageLock?: number;
   /** satırdaki en yüksek revizyon kuşağı */
   rev?: number;
   /** vurgulanan replik satırı */
@@ -296,6 +298,7 @@ function blockLines(b: ScriptBlock, opts: LayoutOptions, geo: Geo, sid: string |
     sceneNo: k === 0 && opts.sceneNumbers && b.el === 'sceneHeading' ? b.sceneNo : undefined,
     src: b.idx !== undefined ? { b: b.idx, o: w.start } : undefined,
     sid,
+    pageLock: k === 0 && b.el === 'sceneHeading' ? b.pageLock : undefined,
     rev: w.runs.reduce((m, r) => Math.max(m, r.rev ?? 0), 0) || undefined,
   }));
 }
@@ -423,6 +426,9 @@ export function paginate(blocks: ScriptBlock[], opts: LayoutOptions): Page[] {
     if (u.kind === 'break') {
       if (used() > 0) newPage();
       continue;
+    }
+    if (u.kind === 'heading' && u.lines[0]?.pageLock && u.lines[0].pageLock > page().number) {
+      while (page().number < u.lines[0].pageLock) newPage();
     }
     const before = used() === 0 ? 0 : u.before;
     const free = L - used() - before;

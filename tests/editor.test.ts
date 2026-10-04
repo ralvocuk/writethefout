@@ -14,6 +14,8 @@ import {
   TagMark,
   detectElement,
   suggest,
+  characterCandidates,
+  sceneHeadingCandidates,
   baseName,
   toggleDual,
 } from '../src/editor/screenplay';
@@ -54,6 +56,8 @@ describe('eleman algılama', () => {
     expect(suggest('ne', ['NERMİN'])).toBe('RMİN');
     expect(baseName('Elif (D.S.)')).toBe('ELİF');
     expect(baseName('Elif ^')).toBe('ELİF');
+    expect(characterCandidates(['Elif (D.S.)', 'ELİF', 'Mert ^'])).toEqual(['ELİF', 'MERT']);
+    expect(sceneHeadingCandidates(['İÇ. MUTFAK - GECE'], 'tr')).toContain('İÇ. MUTFAK - GECE');
   });
 });
 
@@ -118,6 +122,14 @@ describe('senaryo tuş akışı', () => {
     expect(els(e)).toEqual(['action']);
     press(e, 'Enter');
     expect(els(e)).toEqual(['sceneHeading']);
+  });
+
+  it('karakterden Tab diyaloga, diyalogdan Tab paranteze geçer', () => {
+    const e = make([L('character', 'Hikmet')]);
+    press(e, 'Tab');
+    expect(els(e)).toEqual(['character', 'dialogue']);
+    press(e, 'Tab');
+    expect(els(e)).toEqual(['character', 'dialogue', 'parenthetical']);
   });
 
   it('diyalogda Tab parantez açar', () => {

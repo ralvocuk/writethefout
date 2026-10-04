@@ -16,6 +16,7 @@ export interface SceneInfo {
   time: string;
   section: string | null;
   page: number;
+  pageLock?: number;
   eighths: number;
   characters: string[];
   words: number;
@@ -37,6 +38,7 @@ export interface ScriptModel {
   sections: { idx: number; title: string }[];
   characters: CharacterInfo[];
   pages: number;
+  revisionPages: number[];
   words: number;
   dialogueWords: number;
   actionWords: number;
@@ -62,6 +64,7 @@ export function buildModel(json: string | object | null, paper: Paper = 'a4'): S
   const blocks = numberScenes(blocksFromJson(json));
   const pages = paginate(blocks, { paper, lang: 'tr', sceneNumbers: false, headingSpace: 2 });
   const spans = new Map(sceneSpans(pages, paper).map((s) => [s.sid, s]));
+  const revisionPages = pages.filter((p) => p.lines.some((l) => l && (l.rev || l.pair?.rev))).map((p) => p.number);
 
   const scenes: SceneInfo[] = [];
   const sections: { idx: number; title: string }[] = [];
@@ -102,6 +105,7 @@ export function buildModel(json: string | object | null, paper: Paper = 'a4'): S
         ...p,
         section,
         page: span?.page ?? 1,
+        pageLock: b.pageLock,
         eighths: span?.eighths ?? 1,
         characters: [],
         words: 0,
@@ -146,6 +150,7 @@ export function buildModel(json: string | object | null, paper: Paper = 'a4'): S
     sections,
     characters: [...chars.values()].sort((a, b) => b.lines - a.lines || a.name.localeCompare(b.name, 'tr')),
     pages: pages.length,
+    revisionPages,
     words,
     dialogueWords,
     actionWords,

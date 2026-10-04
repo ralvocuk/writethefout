@@ -12,7 +12,7 @@ export interface JText {
 }
 export interface JLine {
   type: 'line';
-  attrs: { el: El; sid?: string | null; num?: string | null; dual?: boolean };
+  attrs: { el: El; sid?: string | null; num?: string | null; dual?: boolean; pageLock?: number | null };
   content: JText[];
 }
 export interface JDoc {

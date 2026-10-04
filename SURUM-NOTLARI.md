@@ -1,6 +1,4 @@
-writetheFout. 0.7.0
+writetheFout. 0.7.1
 
-* Görsel değişiklikler ve bir takım yeni özellikler!
-
-
+* Yeni özellik denemeleri ve tutarlılık artırma.
 

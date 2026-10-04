@@ -20,6 +20,8 @@ export interface ScriptBlock {
   sid?: string;
   /** kilitli sahne numarası */
   num?: string;
+  /** bu sahne başlığının başlaması gereken sayfa */
+  pageLock?: number;
   /** hesaplanmış sahne numarası */
   sceneNo?: string;
   dual?: boolean;
@@ -102,6 +104,7 @@ function build(el: El, attrs: Record<string, unknown>, items: Inline[], idx: num
     runs: mergeRuns(runs),
     sid: (attrs.sid as string) || undefined,
     num: (attrs.num as string) || undefined,
+    pageLock: Number.isInteger(attrs.pageLock) && Number(attrs.pageLock) > 1 ? Number(attrs.pageLock) : undefined,
     dual: !!attrs.dual || undefined,
     delGen,
     idx,
@@ -182,6 +185,7 @@ export function blocksToDoc(blocks: ScriptBlock[], newSid: () => string): object
     const attrs: Record<string, unknown> = { el: b.el };
     if (b.el === 'sceneHeading') attrs.sid = b.sid ?? newSid();
     if (b.num) attrs.num = b.num;
+    if (b.pageLock) attrs.pageLock = b.pageLock;
     if (b.dual) attrs.dual = true;
     return { type: 'line', attrs, content: inline };
   });

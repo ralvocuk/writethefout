@@ -60,6 +60,7 @@ interface Meta {
   app: 'writetheFout';
   settings: DocSettings;
   sids: string[];
+  pageLocks: Record<string, number>;
   scenes: Record<string, Omit<SceneMeta, 'sid' | 'synopsis'>>;
   characters: Record<string, Omit<CharacterProfile, 'name'>>;
   notes: DocNote[];
@@ -154,9 +155,12 @@ export function serializeDocument(d: ScriptDocument): string {
     native: true,
     synopses: heads.map((h) => d.scenes[h.attrs.sid ?? '']?.synopsis),
   });
+  const pageLocks: Record<string, number> = {};
   const scenes: Meta['scenes'] = {};
   for (const h of heads) {
-    const s = d.scenes[h.attrs.sid ?? ''];
+    const sid = h.attrs.sid ?? '';
+    if (h.attrs.pageLock && sid) pageLocks[sid] = Number(h.attrs.pageLock);
+    const s = d.scenes[sid];
     if (s && (s.color || s.status !== 'draft' || s.storyDay)) scenes[h.attrs.sid!] = { color: s.color, status: s.status, storyDay: s.storyDay };
   }
   const characters: Meta['characters'] = {};
@@ -166,6 +170,7 @@ export function serializeDocument(d: ScriptDocument): string {
     app: 'writetheFout',
     settings: d.settings,
     sids: heads.map((h) => h.attrs.sid ?? ''),
+    pageLocks,
     scenes,
     characters,
     notes: d.notes,
@@ -195,7 +200,7 @@ export function parseDocument(text: string, newSid: () => string): ScriptDocumen
   lines = lines.map((l) => {
     if (l.attrs.el !== 'sceneHeading' || !lineText(l).trim()) return l;
     const sid = metaJson?.sids?.[hi++] || undefined;
-    return sid ? { ...l, attrs: { ...l.attrs, sid } } : l;
+    return sid ? { ...l, attrs: { ...l.attrs, sid, pageLock: metaJson?.pageLocks?.[sid] ?? null } } : l;
   });
 
   // yan işaretler: önce aynı sıradaki satır, değilse ±5 satır içinde aynı karma

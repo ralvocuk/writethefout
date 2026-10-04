@@ -29,6 +29,7 @@ export function Inspector() {
   const sid = useStore((s) => s.cursorSid);
   const scenes = useStore((s) => s.scenes);
   const updateScene = useStore((s) => s.updateScene);
+  const setPageLock = useStore((s) => s.setPageLock);
   const active = useStore((s) => s.active);
 
   const scene = model?.scenes.find((s) => s.sid === sid);
@@ -72,6 +73,29 @@ export function Inspector() {
               <span className="muted">{t('Hikâye günü')}</span>
               <input value={sm.storyDay} placeholder={t('ör. 1. gün')} onChange={(e) => updateScene(scene.sid, { storyDay: e.target.value })} />
             </label>
+            <div className="field">
+              <span className="muted">{t('Sayfa başlangıcı')}</span>
+              <div className="lock-row">
+                <input
+                  type="number"
+                  min={2}
+                  max={999}
+                  value={scene.pageLock ?? ''}
+                  placeholder={t('Otomatik')}
+                  onChange={(e) => {
+                    const v = e.target.value.trim();
+                    setPageLock(scene.sid, v ? Number(v) : null);
+                  }}
+                  aria-label={t('Sahne başlangıç sayfası')}
+                />
+                {scene.pageLock ? (
+                  <button className="text-btn" onClick={() => setPageLock(scene.sid, null)}>{t('Kilidi aç')}</button>
+                ) : (
+                  <button className="text-btn" onClick={() => setPageLock(scene.sid, scene.page)}>{t('Mevcut sayfaya kilitle')}</button>
+                )}
+              </div>
+              <span className="hint">{scene.pageLock ? t('Sahne bu sayfadan önce başlatılmaz.') : t('Sayfa akışı otomatik.')}</span>
+            </div>
             <div className="field">
               <span className="muted">{t('Karakterler')}</span>
               <span className="chips">
@@ -174,6 +198,11 @@ function RevisionPanel() {
           : t('Açınca yazdıkların seçili renkle işaretlenir, silinen metin onaylanana kadar üstü çizili kalır.')}
       </p>
       {revised ? (
+        <>
+        <div className="field">
+          <span className="muted">{t('Revize sayfaları')}</span>
+          <span className="num">{model?.revisionPages.length ? model.revisionPages.join(', ') : '—'}</span>
+        </div>
         <div className="rev-actions">
           <span className="muted num">
             {counts.gens.size > 1 ? `${t('{n} tur', { n: counts.gens.size })} · ` : ''}
@@ -189,6 +218,7 @@ function RevisionPanel() {
             {t('Revizyonları onayla')}
           </button>
         </div>
+        </>
       ) : null}
       <SceneNumberLock />
     </div>

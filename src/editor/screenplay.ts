@@ -39,7 +39,7 @@ export const EMPTY_ENTER: Record<El, El> = {
 export const TAB_NEXT: Record<El, El> = {
   sceneHeading: 'action',
   action: 'character',
-  character: 'transition',
+  character: 'dialogue',
   parenthetical: 'dialogue',
   dialogue: 'parenthetical',
   transition: 'sceneHeading',
@@ -53,30 +53,32 @@ export const SHIFT_TAB_NEXT: Record<El, El> = {
   sceneHeading: 'transition',
   action: 'sceneHeading',
   character: 'action',
-  parenthetical: 'character',
+  parenthetical: 'dialogue',
   dialogue: 'character',
-  transition: 'character',
+  transition: 'dialogue',
   centered: 'action',
   lyrics: 'dialogue',
   section: 'action',
   pageBreak: 'action',
 };
 
-const HEADING_RE = new RegExp(`^(${HEADING_PREFIX})\\.\\s`, 'u');
+const HEADING_RE = new RegExp(`^(${HEADING_PREFIX})\\.?\\s`, 'iu');
 const TRANSITION_RE = /^[\p{Lu}\s]+\s?(:|\.)$/u;
 const TRANSITION_WORDS = /(KESME|GEÇİŞ|KARARMA|AÇILMA|CUT TO|FADE (IN|OUT)|DISSOLVE TO|SMASH CUT|SCHNITT|ÜBERBLENDE|ABBLENDE|AUFBLENDE|CORTE A|FUNDIDO|ENCADENADO|COUPE|FONDU|ENCHAÎNÉ)/u;
 
 /** Aksiyon satırının metninden elemanı tahmin eder. */
 export function detectElement(text: string, current: El, prev: El | null): El {
   if (current !== 'action') return current;
-  if (HEADING_RE.test(upperTr(text)) || HEADING_RE.test(text.toUpperCase())) return 'sceneHeading';
-  const u = upperTr(text.trim());
+  const trimmed = text.trim();
+  const upper = upperTr(trimmed);
+  if (HEADING_RE.test(trimmed) || HEADING_RE.test(upper)) return 'sceneHeading';
+  const u = upper.replace(/\s+/gu, ' ');
   if (TRANSITION_RE.test(u) && TRANSITION_WORDS.test(u)) return 'transition';
-  if (text.startsWith('(') && (prev === 'character' || prev === 'dialogue')) return 'parenthetical';
+  if (/^\([^)]*\)?$/u.test(trimmed) && (prev === 'character' || prev === 'dialogue')) return 'parenthetical';
   if (/^#\s/.test(text)) return 'section';
-  if (/^>.*<$/.test(text.trim()) && text.trim().length > 2) return 'centered';
-  if (/^~/.test(text) && (prev === 'character' || prev === 'dialogue' || prev === 'lyrics' || prev === 'parenthetical')) return 'lyrics';
-  if (text.trim() === '===') return 'pageBreak';
+  if (/^>.*<$/u.test(trimmed) && trimmed.length > 2) return 'centered';
+  if (/^~/u.test(text) && (prev === 'character' || prev === 'dialogue' || prev === 'lyrics' || prev === 'parenthetical')) return 'lyrics';
+  if (trimmed === '===') return 'pageBreak';
   return current;
 }
 
@@ -86,18 +88,39 @@ export { baseName, upperTr };
 export const STANDARD_HEADINGS = (lang: Lang = 'tr') => scriptLabels(lang).headings;
 export const TIMES = (lang: Lang = 'tr') => scriptLabels(lang).times;
 
+export function normalizeCompletionKey(s: string): string {
+  return upperTr(s).replace(/[\s]+/gu, ' ').trim();
+}
+
 /** Ghost metin önerisi: yazılana uyan ilk adayın kalan kısmı. */
 export function suggest(typed: string, candidates: string[]): string {
   if (!typed.trim()) return '';
-  const t = upperTr(typed);
+  const key = normalizeCompletionKey(typed);
   for (const c of candidates) {
-    const u = upperTr(c);
-    if (u.length > t.length && u.startsWith(t)) return c.slice(typed.length);
+    const u = normalizeCompletionKey(c);
+    if (u.length > key.length && u.startsWith(key)) return c.slice(typed.length);
   }
   return '';
 }
 
+/** Karakter adlarını farklı yazım biçimlerinden tek bir kanonik havuza indirger. */
+export function characterCandidates(names: string[]): string[] {
+  return [...new Set(names.map(baseName).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'tr'));
+}
+
+/** Sahne başlığı için güçlü aday havuzu: mevcut sahneler + standart önekler + zamanlar. */
+export function sceneHeadingCandidates(headings: string[], lang: Lang = 'tr'): string[] {
+  const existing = headings.map((h) => h.trim()).filter(Boolean);
+  const prefixes = STANDARD_HEADINGS(lang).map((h) => h.trimEnd());
+  const times = TIMES(lang);
+  const out = [...existing];
+  for (const p of prefixes) out.push(`${p} `);
+  for (const p of prefixes) for (const time of times) out.push(`${p} - ${time}`);
+  return [...new Set(out)].sort((a, b) => a.localeCompare(b, scriptLabels(lang).locale));
+}
+
 export const newSid = () => Math.random().toString(36).slice(2, 10);
+
 
 /* ---------- Şema ---------- */
 
@@ -121,6 +144,7 @@ export const Line = Node.create({
       },
       sid: { default: null, renderHTML: (a) => (a.sid ? { 'data-sid': a.sid } : {}) },
       num: { default: null, renderHTML: (a) => (a.num ? { 'data-locked': a.num } : {}) },
+      pageLock: { default: null, renderHTML: (a) => (a.pageLock ? { 'data-page-lock': a.pageLock } : {}) },
       dual: { default: false, renderHTML: (a) => (a.dual ? { 'data-dual': 'true' } : {}) },
     };
   },
@@ -265,14 +289,14 @@ function computeGhost(state: EditorState, opts: ScreenplayOptions): GhostState {
   const local = collect(state.doc, $p.before());
   const ext = opts.known();
   if (el === 'character') {
-    const pool = [...new Set([...local.names, ...ext.names])].sort();
+    const pool = characterCandidates([...local.names, ...ext.names]);
     return { text: suggest(typed, pool), pos: $p.pos };
   }
   if (el === 'sceneHeading') {
     const dash = typed.lastIndexOf(' - ');
     if (dash >= 0) return { text: suggest(typed.slice(dash + 3), TIMES(ext.lang)), pos: $p.pos };
-    const pool = [...new Set([...local.headings, ...ext.headings])].sort();
-    return { text: suggest(typed, [...STANDARD_HEADINGS(ext.lang), ...pool]), pos: $p.pos };
+    const pool = sceneHeadingCandidates([...local.headings, ...ext.headings], ext.lang);
+    return { text: suggest(typed, pool), pos: $p.pos };
   }
   return { text: suggest(typed, scriptLabels(ext.lang ?? 'tr').transitions), pos: $p.pos };
 }

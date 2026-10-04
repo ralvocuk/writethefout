@@ -135,6 +135,7 @@ interface State {
   moveScene(sid: string, beforeSid: string | null): void;
   moveSceneToSection(sid: string, sectionIdx: number | null): void;
   lockNumbers(lock: boolean): void;
+  setPageLock(sid: string, page: number | null): void;
   commitRevisions(): void;
   moveRevisionsTo(gen: number): void;
   takeSnapshot(label?: string): Promise<void>;
@@ -584,6 +585,18 @@ export const useStore = create<State>((set, get) => {
       for (const l of doc.content) if (l.attrs?.el === 'sceneHeading') l.attrs.num = lock ? (bySid.get(l.attrs.sid as string) ?? null) : null;
       get().replaceScript(doc);
       get().notify(lock ? t('Sahne numaraları kilitlendi') : t('Sahne numaralarının kilidi açıldı'));
+    },
+    setPageLock(sid, page) {
+      const doc = currentJson();
+      const target = Math.max(1, Math.floor(page ?? 1));
+      for (const l of doc.content) {
+        if (l.attrs?.el === 'sceneHeading' && l.attrs.sid === sid) {
+          l.attrs.pageLock = page && target > 1 ? target : null;
+          break;
+        }
+      }
+      get().replaceScript(doc);
+      get().notify(page && target > 1 ? t('Sahne başlangıcı {n}. sayfaya kilitlendi', { n: target }) : t('Sahne sayfa kilidi kaldırıldı'));
     },
     commitRevisions() {
       const doc = currentJson();
