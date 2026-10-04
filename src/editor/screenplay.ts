@@ -301,6 +301,43 @@ function computeGhost(state: EditorState, opts: ScreenplayOptions): GhostState {
   return { text: suggest(typed, scriptLabels(ext.lang ?? 'tr').transitions), pos: $p.pos };
 }
 
+/**
+ * Tab ile akış: boş satırda mevcut satırın türünü değiştir; dolu satırda
+ * bir sonraki senaryo elemanını yeni satır olarak aç. Böylece Tab, yazılmış
+ * karakter/diyalog satırını silmeden profesyonel yazım akışını korur.
+ */
+const tabCreatedDialogue = new WeakSet<Editor>();
+
+export function advanceElement(editor: Editor, el: El): boolean {
+  const { state, view } = editor;
+  const $p = state.selection.$from;
+  const block = $p.parent;
+  if (block.type.name !== 'line') return false;
+
+  const next = TAB_NEXT[el];
+  if (!next) return false;
+
+  if (block.content.size === 0) {
+    // Tab ile az önce oluşturduğumuz boş diyalogda ikinci Tab, diyaloğu
+    // koruyup hemen arkasına parantez açar. Belgeden gelen boş diyalog ise
+    // eski davranışı (mevcut satırı paranteze çevirme) korur.
+    if (el === 'dialogue' && tabCreatedDialogue.has(editor)) {
+      tabCreatedDialogue.delete(editor);
+    } else {
+      return setElement(editor, next);
+    }
+  }
+
+  const lineType = state.schema.nodes.line;
+  const after = $p.after();
+  const tr = state.tr.insert(after, lineType.create({ el: next }));
+  if (el === 'character' && next === 'dialogue') tabCreatedDialogue.add(editor);
+  tr.setSelection(TextSelection.create(tr.doc, after + 1));
+  tr.setStoredMarks([]);
+  view.dispatch(tr.scrollIntoView());
+  return true;
+}
+
 export function setElement(editor: Editor, el: El): boolean {
   const { state, view } = editor;
   const $p = state.selection.$from;
@@ -427,7 +464,7 @@ export const ScreenplayKeys = Extension.create<ScreenplayOptions>({
       'Shift-Enter': () => this.editor.commands.insertContent({ type: 'hardBreak' }),
       Tab: () => {
         const e = el();
-        return e ? setElement(this.editor, TAB_NEXT[e]) : false;
+        return e ? advanceElement(this.editor, e) : false;
       },
       'Shift-Tab': () => {
         const e = el();

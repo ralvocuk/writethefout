@@ -1,4 +1,2 @@
-writetheFout. 0.7.2
-
-* Düzeltiler, deneysel özellikler ve sağlamlaştırmalar.
+Hatalar giderildi, kullanım kolaylığı sağlayacak birkaç özellik eklendi.
 

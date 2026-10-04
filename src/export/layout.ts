@@ -487,8 +487,12 @@ export function paginate(blocks: ScriptBlock[], opts: LayoutOptions): Page[] {
     place(rest, 0);
   }
 
+  // Sadece sondaki doğal boş sayfaları at.
+  // Sayfa kilidi ile oluşturulan ara boş sayfalar gerçek sayfa numaralarını
+  // temsil eder; bunları filtrelemek 3. sayfaya kilitli sahneyi 2. sayfaya çeker.
   for (const p of pages) while (p.lines.length && p.lines.at(-1) === null) p.lines.pop();
-  return pages.filter((p, i) => i === 0 || p.lines.length > 0).map((p, i) => ({ ...p, number: i + 1 }));
+  while (pages.length > 1 && pages.at(-1)!.lines.length === 0) pages.pop();
+  return pages.map((p, i) => ({ ...p, number: i + 1 }));
 }
 
 /* ---------- Sahne numaraları ---------- */

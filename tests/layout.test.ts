@@ -19,7 +19,7 @@ describe('sayfa kilitleri', () => {
 
   it('kilit sayfası doğal sayfadan küçükse geriye sarmaz', () => {
     const pages = paginate([
-      b('action', 'A'.repeat(900)),
+      b('action', 'A'.repeat(4000)),
       b('sceneHeading', 'İÇ. EV - GECE', { sid: 's1', pageLock: 1 }),
     ], { paper: 'a4', lang: 'tr', sceneNumbers: false, headingSpace: 2 });
     const pageWithHeading = pages.findIndex((p) => p.lines.some((l) => l?.sid === 's1')) + 1;
