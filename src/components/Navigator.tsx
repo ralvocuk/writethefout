@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NotePencil, Plus } from '@phosphor-icons/react';
+import { NotePencil, Plus, FilmStrip } from '@phosphor-icons/react';
 import { editorBridge, useStore } from '../store/useStore';
 import { colorVar, formatEighths } from '../script/elements';
 import { activeEditor } from './ScriptEditor';
@@ -56,7 +56,7 @@ export function Navigator() {
     <nav className="binder" aria-label={t('Sahneler')}>
       <div className="binder-tree scroll">
         <div className="binder-section">
-          <span className="label">{t('Sahneler')}</span>
+          <span className="label label-with-icon"><FilmStrip size={13} weight="light" />{t('Sahneler')}</span>
           <span className="label num">{model?.scenes.length ?? 0}</span>
         </div>
         {groups.map((g, gi) => (

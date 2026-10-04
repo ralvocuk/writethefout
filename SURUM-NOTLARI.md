@@ -1,6 +1,6 @@
-writetheFout. 0.6.2
+writetheFout. 0.7.0
 
-* Debugging + sözlük geliştirme.
+* Görsel değişiklikler ve bir takım yeni özellikler!
 
 
 

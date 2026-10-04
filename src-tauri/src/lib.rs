@@ -156,7 +156,8 @@ fn backup_path(app: AppHandle) -> Result<String, String> {
 /// Windows menülerinde sekmeden sonrası sağa yaslı kısayol olarak görünür; tuşları arayüz işler.
 fn item<R: Runtime>(app: &AppHandle<R>, l: &Labels, id: &str, label: &str, keys: &str) -> tauri::Result<tauri::menu::MenuItem<R>> {
   let label = tx(l, id, label);
-  let text = if keys.is_empty() { label } else { format!("{label}\t{keys}") };
+  let shortcut = if cfg!(target_os = "macos") { keys.replace("Ctrl", "⌘") } else { keys.to_string() };
+  let text = if shortcut.is_empty() { label } else { format!("{label}\t{shortcut}") };
   MenuItemBuilder::with_id(id, text).build(app)
 }
 

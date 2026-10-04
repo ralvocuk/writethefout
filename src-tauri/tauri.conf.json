@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "writetheFout",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "identifier": "app.writethefout.desktop",
   "build": {
     "frontendDist": "../dist",
@@ -34,7 +34,9 @@
       "msi",
       "nsis",
       "dmg",
-      "appimage"
+      "appimage",
+      "deb",
+      "rpm"
     ],
     "icon": [
       "icons/32x32.png",
@@ -60,7 +62,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDI4NkE3NDY3QTFBOUI0QjgKUldTNHRLbWhaM1JxS0N6WDJabWFaeVp3MzZUUTlyQzVJb1AzbWxUU0prR1NEZ2xTOU1BcGRrc2oK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDcyQjRGQTVGOUE1QjQ5QTcKUldTblNWdWFYL3EwY2tIalRQR2hFODErMWpJUWs4MlBGQkdvaTBqZ0JSQW1IWHduZ0lmb0pvNm0K",
       "endpoints": [
         "https://github.com/ralvocuk/writethefout/releases/latest/download/latest.json"
       ],

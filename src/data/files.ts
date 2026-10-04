@@ -78,7 +78,7 @@ export async function pickOpenPath(): Promise<string | null> {
     input.onchange = async () => {
       const f = input.files?.[0];
       if (!f) return resolve(null);
-      const path = `C:\\Senaryolar\\${f.name}`;
+      const path = `${navigator.platform.toLowerCase().includes('win') ? 'C:' : '/tmp'}/Senaryolar/${f.name}`;
       const v = vfs();
       v[path] = { text: await f.text(), mtime: f.lastModified };
       saveVfs(v);
@@ -100,7 +100,8 @@ export async function pickSavePath(defaultName: string): Promise<string | null> 
   const p = window.prompt(t('Kaydedilecek dosya adı'), name);
   if (!p) return null;
   const clean = p.replace(/[\\/]/g, '');
-  return `C:\\Senaryolar\\${/\.fountain$/i.test(clean) ? clean : `${clean}.fountain`}`;
+  const root = navigator.platform.toLowerCase().includes('win') ? 'C:/Senaryolar' : '/tmp/Senaryolar';
+  return `${root}/${/\.fountain$/i.test(clean) ? clean : `${clean}.fountain`}`;
 }
 
 /** Uygulama bir dosyayla açıldıysa (çift tıklama ya da ?file=) */

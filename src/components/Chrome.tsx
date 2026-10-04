@@ -1,4 +1,4 @@
-import { ArrowsOut, SidebarSimple, MagnifyingGlass, Export, ListMagnifyingGlass } from '@phosphor-icons/react';
+import { ArrowsOut, SidebarSimple, MagnifyingGlass, Export, ListMagnifyingGlass, PencilSimple, SquaresFour, ListBullets, UsersThree, CalendarBlank, ChartBar, FileText, type Icon } from '@phosphor-icons/react';
 import { SprintStatus } from './Goals';
 import { UpdateBadge } from './Update';
 import { useStore, type Tab, type Theme } from '../store/useStore';
@@ -9,21 +9,32 @@ import { EMPTY_ENTER, NEXT_ON_ENTER, TAB_NEXT } from '../editor/screenplay';
 import { useCaret } from './ScriptEditor';
 import { locale, t } from '../i18n';
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'write', label: 'Yaz' },
-  { id: 'board', label: 'Pano' },
-  { id: 'outline', label: 'Anahat' },
-  { id: 'characters', label: 'Karakterler' },
-  { id: 'timeline', label: 'Zaman çizelgesi' },
-  { id: 'stats', label: 'İstatistikler' },
-  { id: 'preview', label: 'Önizleme' },
+const TABS: { id: Tab; label: string; Icon: Icon }[] = [
+  { id: 'write', label: 'Yaz', Icon: PencilSimple },
+  { id: 'board', label: 'Pano', Icon: SquaresFour },
+  { id: 'outline', label: 'Anahat', Icon: ListBullets },
+  { id: 'characters', label: 'Karakterler', Icon: UsersThree },
+  { id: 'timeline', label: 'Zaman çizelgesi', Icon: CalendarBlank },
+  { id: 'stats', label: 'İstatistikler', Icon: ChartBar },
+  { id: 'preview', label: 'Önizleme', Icon: FileText },
 ];
+
+export function ProductMark() {
+  return (
+    <span className="product-mark" aria-hidden="true">
+      <span className="product-mark-page" />
+      <span className="product-mark-cursor" />
+    </span>
+  );
+}
 
 export function Wordmark({ big }: { big?: boolean }) {
   return (
-    <span className={`wordmark ${big ? 'big' : ''}`} aria-label="writetheFout.">
-      write<span className="wm-the">the</span>
-      <span className="wm-f">F</span>out<i>.</i>
+    <span className={`brand-lockup ${big ? 'big' : ''}`} aria-label="writetheFout.">
+      <ProductMark />
+      <span className="wordmark">
+        write<span className="wm-the">the</span><span className="wm-f">F</span>out<i>.</i>
+      </span>
     </span>
   );
 }
@@ -54,7 +65,8 @@ export function TopBar() {
       <div className="tabs" role="tablist">
         {TABS.map((x) => (
           <button key={x.id} role="tab" className="tab" aria-selected={x.id === tab} onClick={() => setTab(x.id)}>
-            {t(x.label)}
+            <x.Icon size={14} weight={x.id === tab ? 'regular' : 'light'} aria-hidden="true" />
+            <span>{t(x.label)}</span>
           </button>
         ))}
       </div>
