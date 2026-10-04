@@ -1,4 +1,4 @@
-writetheFout. 0.7.1
+writetheFout. 0.7.2
 
-* Yeni özellik denemeleri ve tutarlılık artırma.
+* Düzeltiler, deneysel özellikler ve sağlamlaştırmalar.
 
