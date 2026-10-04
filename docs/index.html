@@ -1,19 +1,241 @@
 <!doctype html>
-<html lang="tr" data-theme="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-    <title>writetheFout.</title>
-    <script>
-      try {
-        var t = JSON.parse(localStorage.getItem('wtf.theme2') || '"dark"');
-        document.documentElement.dataset.theme = t;
-      } catch (e) {}
-    </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111214">
+<meta name="description" content="writetheFout. — senaryonu yaz, sahnelerini düzenle, karakterlerini takip et ve hikâyenin tamamını tek çalışma alanında yönet.">
+<title>writetheFout. — Senaryon için tasarlandı.</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Courier+Prime:wght@400;700&display=swap');
+
+:root{
+  --desk:#0c0d0f; --page:#111214; --panel:#151619; --panel2:#1b1c1f;
+  --ink:#e8e7e3; --ink2:#a5a7aa; --ink3:#6d7075;
+  --rule:#26282c; --rule2:#393c41; --accent:#e07a62; --accent2:#ef927c;
+  --wash:rgba(224,122,98,.10); --max:1220px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--desk);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;line-height:1.55}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.28;background-image:radial-gradient(rgba(255,255,255,.08) .7px,transparent .7px);background-size:4px 4px;mask-image:linear-gradient(to bottom,black,transparent 70%);z-index:-1}
+a{color:inherit;text-decoration:none}
+button{font:inherit}
+.container{width:min(var(--max),calc(100% - 40px));margin:auto}
+.mono{font-family:"IBM Plex Mono",monospace}
+.kicker{font:500 11px "IBM Plex Mono",monospace;letter-spacing:.13em;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--ink2)}
+.rule{border-top:1px solid var(--rule)}
+.nav{position:sticky;top:0;z-index:20;height:58px;background:rgba(12,13,15,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--rule)}
+.nav-inner{height:100%;display:flex;align-items:center;justify-content:space-between;gap:22px}
+.brand{font-size:16px;font-weight:700;letter-spacing:-.04em}
+.brand b{color:var(--accent)}
+.nav-links{display:flex;gap:22px;font:500 10px "IBM Plex Mono";letter-spacing:.07em;text-transform:uppercase;color:var(--ink3)}
+.nav-links a:hover{color:var(--ink)}
+.nav-actions{display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;height:38px;padding:0 15px;border:1px solid var(--rule2);background:var(--panel);border-radius:3px;font:500 11px "IBM Plex Mono";letter-spacing:.02em;transition:.2s}
+.btn:hover{border-color:var(--accent);transform:translateY(-1px)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#17110f}
+.btn.primary:hover{background:var(--accent2)}
+.hero{padding:88px 0 70px}
+.hero-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:60px;align-items:center}
+.hero h1{font-size:clamp(48px,7vw,86px);line-height:.98;letter-spacing:-.065em;margin:18px 0 25px;font-weight:600}
+.hero h1 span{display:block;color:var(--ink2)}
+.hero-copy{max-width:570px;font-size:18px;color:var(--ink2)}
+.hero-meta{display:flex;flex-wrap:wrap;gap:9px;margin:27px 0}
+.pill{border:1px solid var(--rule2);padding:6px 9px;color:var(--ink3);font:10px "IBM Plex Mono";text-transform:uppercase;letter-spacing:.08em}
+.hero-buttons{display:flex;gap:10px;flex-wrap:wrap}
+.hero-shot{position:relative}
+.hero-shot:before{content:"";position:absolute;inset:8% 5%;background:var(--accent);filter:blur(90px);opacity:.10}
+.shot-frame{position:relative;border:1px solid var(--rule2);background:#0c0d0f;box-shadow:0 30px 90px rgba(0,0,0,.45);padding:8px}
+.shot-frame img{display:block;width:100%;height:auto}
+.shot-label{position:absolute;left:18px;bottom:18px;background:rgba(12,13,15,.9);border:1px solid var(--rule2);padding:7px 10px;font:10px "IBM Plex Mono";color:var(--ink2)}
+.scroll-cue{margin-top:38px;color:var(--ink3);font:10px "IBM Plex Mono";letter-spacing:.12em;text-transform:uppercase}
+.section{padding:115px 0}
+.section-head{display:flex;justify-content:space-between;gap:30px;align-items:end;margin-bottom:45px}
+.section-head h2{font-size:clamp(35px,5vw,62px);line-height:1;letter-spacing:-.055em;margin:12px 0 0;max-width:720px}
+.section-head p{max-width:410px;color:var(--ink2);margin:0}
+.product-tabs{display:flex;gap:0;border:1px solid var(--rule);overflow:auto;background:var(--panel)}
+.product-tab{border:0;border-right:1px solid var(--rule);background:transparent;color:var(--ink3);padding:14px 17px;white-space:nowrap;font:500 10px "IBM Plex Mono";text-transform:uppercase;cursor:pointer}
+.product-tab.active{color:var(--ink);background:var(--wash);box-shadow:inset 0 -2px var(--accent)}
+.product-stage{margin-top:15px;border:1px solid var(--rule2);background:var(--panel);padding:12px;overflow:hidden}
+.product-stage img{width:100%;display:block;transition:opacity .18s,transform .25s}
+.stage-caption{display:grid;grid-template-columns:1fr auto;gap:30px;padding:20px 7px 7px}
+.stage-caption h3{margin:0 0 6px;font-size:22px;letter-spacing:-.03em}
+.stage-caption p{margin:0;color:var(--ink2);max-width:720px}
+.stage-index{font:10px "IBM Plex Mono";color:var(--ink3);padding-top:5px}
+.feature{display:grid;grid-template-columns:1fr 1.3fr;gap:70px;align-items:center;padding:95px 0;border-top:1px solid var(--rule)}
+.feature.reverse{grid-template-columns:1.3fr 1fr}
+.feature.reverse .feature-copy{order:2}
+.feature h3{font-size:clamp(32px,4vw,50px);line-height:1.02;letter-spacing:-.05em;margin:12px 0 16px}
+.feature p{color:var(--ink2);font-size:17px;max-width:470px}
+.feature-shot{border:1px solid var(--rule2);padding:7px;background:var(--panel);box-shadow:0 25px 70px rgba(0,0,0,.3)}
+.feature-shot img{display:block;width:100%}
+.quote{padding:105px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.quote blockquote{margin:0;max-width:1000px;font-size:clamp(34px,5vw,65px);line-height:1.04;letter-spacing:-.055em}
+.quote blockquote em{font-style:normal;color:var(--accent)}
+.formats{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center}
+.formats h2{font-size:clamp(36px,5vw,58px);line-height:1;letter-spacing:-.055em;margin:12px 0 18px}
+.format-list{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.format{border:1px solid var(--rule2);background:var(--panel);padding:25px 15px;text-align:center;font:600 14px "IBM Plex Mono";color:var(--ink)}
+.format small{display:block;margin-top:7px;color:var(--ink3);font:10px "IBM Plex Mono";font-weight:400}
+.cta{padding:130px 0;text-align:center}
+.cta h2{font-size:clamp(48px,8vw,92px);line-height:.95;letter-spacing:-.07em;margin:14px auto 24px;max-width:950px}
+.cta p{color:var(--ink2);max-width:550px;margin:0 auto 30px;font-size:17px}
+.footer{border-top:1px solid var(--rule);padding:22px 0;color:var(--ink3);font:10px "IBM Plex Mono";display:flex;justify-content:space-between;gap:20px}
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:none}
+@media(max-width:900px){
+  .nav-links{display:none}.hero-grid,.formats,.feature,.feature.reverse{grid-template-columns:1fr;gap:40px}
+  .feature.reverse .feature-copy{order:0}.section{padding:80px 0}.hero{padding-top:60px}
+  .section-head{display:block}.section-head p{margin-top:20px}.stage-caption{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .container{width:min(100% - 24px,var(--max))}
+  .nav-actions .btn:not(.primary){display:none}.hero h1{font-size:50px}
+  .hero-copy{font-size:16px}.format-list{grid-template-columns:1fr}
+  .feature{padding:70px 0}.cta{padding:90px 0}
+}
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="#">writethe<span>Fout.</span></a>
+    <nav class="nav-links">
+      <a href="#urun">Ürün</a><a href="#ozellikler">Özellikler</a><a href="#format">Dosyalar</a><a href="https://github.com/ralvocuk/writethefout" target="_blank">GitHub</a>
+    </nav>
+    <div class="nav-actions"><a class="btn" href="https://github.com/ralvocuk/writethefout" target="_blank">Kaynak kodu</a><a class="btn primary" href="#indir">Ücretsiz indir</a></div>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="container hero-grid">
+    <div class="reveal">
+      <div class="kicker">Senaryo yazım çalışma alanı</div>
+      <h1>Senaryon için.<span>Hikâyen için.</span></h1>
+      <p class="hero-copy">writetheFout.; sahne yazımından karakter takibine, anahattan zaman çizelgesine kadar senaryonun tamamını tek bir masaüstü çalışma alanında toplar.</p>
+      <div class="hero-meta"><span class="pill">Windows</span><span class="pill">Ücretsiz</span><span class="pill">Çevrimdışı</span><span class="pill">Açık dosya biçimi</span></div>
+      <div class="hero-buttons"><a class="btn primary" href="#indir">writetheFout.'u indir →</a><a class="btn" href="https://github.com/ralvocuk/writethefout" target="_blank">GitHub'da incele</a></div>
+      <div class="scroll-cue">↓ çalışma alanını keşfet</div>
+    </div>
+    <div class="hero-shot reveal">
+      <div class="shot-frame"><img src="assets/yaz.png" alt="writetheFout. Yaz çalışma alanı"><div class="shot-label">01 / YAZ — SENARYO EDITÖRÜ</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="urun" class="section">
+  <div class="container">
+    <div class="section-head reveal">
+      <div><div class="kicker">Ürünün kendisi</div><h2>Senaryonun tamamı.<br>Tek çalışma alanında.</h2></div>
+      <p>Bu bir sunum maketi değil. Aşağıdaki ekranlar doğrudan writetheFout.'un içinden alınmıştır.</p>
+    </div>
+    <div class="product-tabs reveal">
+      <button class="product-tab active" data-key="yaz">Yaz</button>
+      <button class="product-tab" data-key="pano">Pano</button>
+      <button class="product-tab" data-key="anahat">Anahat</button>
+      <button class="product-tab" data-key="karakterler">Karakterler</button>
+      <button class="product-tab" data-key="zaman">Zaman çizelgesi</button>
+      <button class="product-tab" data-key="istatistik">İstatistikler</button>
+    </div>
+    <div class="product-stage reveal">
+      <img id="product-image" src="assets/yaz.png" alt="writetheFout. uygulama ekranı">
+      <div class="stage-caption">
+        <div><h3 id="stage-title">Yaz</h3><p id="stage-copy">Senaryonu yaz. Otomatik biçimlendirme ve klavye odaklı çalışma ile hikâyenin içinde kal.</p></div>
+        <div class="stage-index mono" id="stage-index">01 / 06</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="ozellikler" class="section">
+  <div class="container">
+    <div class="feature reveal">
+      <div class="feature-copy"><div class="kicker">01 — Pano</div><h3>Hikâyenin haritasını çıkar.</h3><p>Sahnelerini kartlara ayır. Karakter, mekân ve renklerle filtrele. Hikâyenin akışını tek bakışta gör.</p></div>
+      <div class="feature-shot"><img src="assets/pano.png" alt="writetheFout. Pano ekranı"></div>
+    </div>
+    <div class="feature reverse reveal">
+      <div class="feature-copy"><div class="kicker">02 — Karakterler</div><h3>Karakterlerin de bir hikâyesi var.</h3><p>Kim kaç sahnede? Kaç kelime söylüyor? Hikâyenin ne kadarında yer alıyor? Karakter ekranı bunları tek yerde toplar.</p></div>
+      <div class="feature-shot"><img src="assets/karakterler.png" alt="writetheFout. Karakterler ekranı"></div>
+    </div>
+    <div class="feature reveal">
+      <div class="feature-copy"><div class="kicker">03 — Zaman çizelgesi</div><h3>Hikâyenin zamanını kaybetme.</h3><p>Sahnelerin gününü, sırasını ve karakterlerin hikâyedeki hareketini tek bir çizelgede takip et.</p></div>
+      <div class="feature-shot"><img src="assets/zaman-cizelgesi.png" alt="writetheFout. Zaman Çizelgesi ekranı"></div>
+    </div>
+    <div class="feature reverse reveal">
+      <div class="feature-copy"><div class="kicker">04 — İstatistikler</div><h3>Senaryon hakkında daha fazlasını bil.</h3><p>Sayfa, sahne, karakter, diyalog, mekân ve prodüksiyon detaylarını tek bakışta gör. İstersen veriyi CSV olarak dışa aktar.</p></div>
+      <div class="feature-shot"><img src="assets/istatistikler.png" alt="writetheFout. İstatistikler ekranı"></div>
+    </div>
+    <div class="feature reveal">
+      <div class="feature-copy"><div class="kicker">05 — Anahat</div><h3>Bütünü kaybetmeden detaya gir.</h3><p>Sahnelerini tablo halinde karşılaştır; zaman, sayfa uzunluğu, karakterler, özet ve durum bilgilerini aynı yerde gör.</p></div>
+      <div class="feature-shot"><img src="assets/anahat.png" alt="writetheFout. Anahat ekranı"></div>
+    </div>
+  </div>
+</section>
+
+<section class="quote">
+  <div class="container reveal">
+    <div class="kicker">Dosya felsefesi</div>
+    <blockquote>Senaryon kapalı bir sistemde değil.<br><em>Kendi bilgisayarında.</em></blockquote>
+  </div>
+</section>
+
+<section id="format" class="section">
+  <div class="container formats reveal">
+    <div>
+      <div class="kicker">Açık dosya biçimi</div>
+      <h2>Hikâyen<br>sana ait.</h2>
+      <p class="muted">Senaryonu kendi bilgisayarında tut. Çalışmanı farklı biçimlerde dışa aktar ve istediğin zaman başka araçlara taşı.</p>
+    </div>
+    <div class="format-list">
+      <div class="format">PDF<small>paylaş / yazdır</small></div>
+      <div class="format">FDX<small>profesyonel akış</small></div>
+      <div class="format">FOUNTAIN<small>açık format</small></div>
+    </div>
+  </div>
+</section>
+
+<section class="cta" id="indir">
+  <div class="container reveal">
+    <div class="kicker">Başlamaya hazır</div>
+    <h2>İlk sahnen<br>boş duruyor.</h2>
+    <p>writetheFout. Windows için kullanıma hazır. Kaynak kodu açık; senaryon ise senin.</p>
+    <a class="btn primary" href="https://github.com/ralvocuk/writethefout" target="_blank">writetheFout.'u GitHub'dan indir →</a>
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <div>writetheFout.</div>
+  <div>Windows · Ücretsiz · Çevrimdışı · Açık dosya biçimi</div>
+</footer>
+
+<script>
+const data={
+  yaz:{img:"assets/yaz.png",title:"Yaz",copy:"Senaryonu yaz. Otomatik biçimlendirme ve klavye odaklı çalışma ile hikâyenin içinde kal.",i:"01 / 06"},
+  pano:{img:"assets/pano.png",title:"Pano",copy:"Sahnelerini kartlara ayır, filtrele ve hikâyenin akışını bir bakışta gör.",i:"02 / 06"},
+  anahat:{img:"assets/anahat.png",title:"Anahat",copy:"Sahne, zaman, sayfa uzunluğu, karakter ve özet bilgilerini tek tabloda takip et.",i:"03 / 06"},
+  karakterler:{img:"assets/karakterler.png",title:"Karakterler",copy:"Karakterlerinin sahne, kelime ve diyalog dağılımını tek yerde gör.",i:"04 / 06"},
+  zaman:{img:"assets/zaman-cizelgesi.png",title:"Zaman çizelgesi",copy:"Sahnelerin gününü, sırasını ve karakterlerin hikâyedeki hareketini takip et.",i:"05 / 06"},
+  istatistik:{img:"assets/istatistikler.png",title:"İstatistikler",copy:"Senaryonun sayfa, sahne, karakter, diyalog ve prodüksiyon verilerini analiz et.",i:"06 / 06"}
+};
+const img=document.querySelector("#product-image");
+const title=document.querySelector("#stage-title");
+const copy=document.querySelector("#stage-copy");
+const index=document.querySelector("#stage-index");
+document.querySelectorAll(".product-tab").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".product-tab").forEach(x=>x.classList.remove("active"));
+    btn.classList.add("active");
+    const d=data[btn.dataset.key];
+    img.style.opacity="0";
+    setTimeout(()=>{img.src=d.img;img.alt="writetheFout. "+d.title+" ekranı";title.textContent=d.title;copy.textContent=d.copy;index.textContent=d.i;img.style.opacity="1"},120);
+  });
+});
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add("visible")}),{threshold:.12});
+document.querySelectorAll(".reveal").forEach(e=>io.observe(e));
+</script>
+</body>
 </html>
